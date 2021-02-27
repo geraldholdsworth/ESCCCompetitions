@@ -1,19 +1,28 @@
 unit MainUnit;
 
+{$MODE Delphi}
+
 {
 ESCC Competitions written and designed by Gerald J Holdsworth
-(C)2015-2017 Gerald J Holdsworth & East Sutherland Camera Club
+(C)2015-2020 Gerald J Holdsworth & East Sutherland Camera Club
 Graphics by Gerald J Holdsworth & Andy Kirby
 http://www.eastsutherlandcc.org.uk
 http://www.geraldholdsworth.co.uk
+
+There is a fault whereby on import (usually of photographs) that not all get
+imported and an error is reported that the file was unable to be saved. This
+normally happens when the '.escc' file is stored on Dropbox (or OneDrive) and it
+tries to upload itself during an update. Fix for this is to move the file onto
+local storage and use from there.
 }
 
 interface
 
-uses SysUtils,Classes,Graphics,Forms,Controls,StdCtrls,Dialogs,Buttons,ExtCtrls,
-     ComCtrls,Global,ImgList,ToolWin,Messages,System.ImageList,UITypes,
-     Winapi.Windows,Vcl.Grids,System.Actions,Vcl.ActnList,Printers,
-  Vcl.Imaging.pngimage;
+uses SysUtils, Classes, {VCL.Graphics,} Forms, Controls, StdCtrls, Dialogs,
+ Buttons, ExtCtrls, ComCtrls, Global, ImgList, ToolWin, Messages,
+ {System.ImageList,} UITypes, {Winapi.Windows, Vcl.Grids, System.Actions,
+ Vcl.ActnList,} Printers, LCLIntf, ActnList, Menus, StrUtils, {Vcl.Imaging.pngimage, Vcl.Menus,}
+ adpMRU, PrintersDlgs{, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP};
 
 type
  TMembersArray = array of TMembers;
@@ -70,7 +79,7 @@ type
     act_DisplayPOY: TAction;
     act_PrintPOY: TAction;
     act_SavePOY: TAction;
-    act_DeletePhotographs: TAction;
+    act_DeleteRedundantPhotographs: TAction;
     act_RecalculateResults: TAction;
     act_DisplayCompResults: TAction;
     act_PrintCompResults: TAction;
@@ -100,6 +109,15 @@ type
     act_About: TAction;
     ESCCLogo: TImage;
     settings_btn: TToolButton;
+    act_Preferences: TAction;
+    PhotoMenu: TPopupMenu;
+    InsPhotoMenu: TMenuItem;
+    DelPhotoMenu: TMenuItem;
+    IgnPhotoMenu: TMenuItem;
+    adpMRU1: TadpMRU;
+    OpenMenu: TPopupMenu;
+    Reopen_file: TMenuItem;
+    btn_importonlinecomp: TToolButton;
     procedure AddPhotoControl(comp,cat,x: Integer);
     procedure AddPhotoOrMember(Sender: TObject);
     procedure AddMemberControl(member: Integer);
@@ -121,6 +139,7 @@ type
     procedure CloseCompetition;
     procedure CloseSeason;
     procedure comp_dateChange(Sender: TObject);
+    procedure comp_dateEnter(Sender: TObject);
     procedure comp_titleEnter(Sender: TObject);
     procedure comp_titleKeyUp(Sender: TObject;var Key: Word;Shift: TShiftState);
     function CountPhotographs(member: Integer): Integer;
@@ -128,11 +147,11 @@ type
     procedure DeleteCompetitionClick(Sender: TObject);
     procedure DeleteCompetitionPhotographs(comp: Integer);
     procedure DeleteMember(Sender: TObject);
-    procedure DeletePhotographs(Sender: TObject);
+    procedure DeletePhotograph(cat,i: Integer);
+    procedure DeleteRedundantPhotographs(Sender: TObject);
     procedure DeleteVoteSlip(Sender: TObject);
+    procedure DelPhotoMenuClick(Sender: TObject);
     procedure DisplayActiveVoteGraph;
-    procedure DrawALine(cat,entry,x,fromy,toy: Integer);
-    procedure DrawLegends(cat: Integer);
     procedure EditorKeyPress(Sender: TObject; var Key: Char);
     procedure EditSeason(Sender: TObject);
     procedure EnableControls(controls: Integer);
@@ -143,9 +162,14 @@ type
     function FindAuthor(S: String): Integer;
     function FormatTally(S: String): String;
     procedure FreeMemberControls;
+    function GetTagFromControl(Sender: TObject): Integer;
     procedure HelpAbout1Execute(Sender: TObject);
+    procedure IgnorePhoto(Sender: TObject);
+    procedure IgnPhotoMenuClick(Sender: TObject);
     procedure ImportMembers(Sender: TObject);
+    procedure ImportOnlineComp(Sender: TObject);
     procedure ImportPhotos(Sender: TObject);
+    procedure InsPhotoMenuClick(Sender: TObject);
     function LoadInMembers(var F: TFileStream): Boolean;
     procedure LoadSeason(filename: String);
     procedure MarkEmptyPhotos(cat,y: Integer);
@@ -153,8 +177,7 @@ type
     procedure NewSeasonClick(Sender: TObject);
     procedure OpenCompetition(Sender: TObject);
     procedure OpenSeasonClick(Sender: TObject);
-    procedure OutputAnnualResults(output: Integer);
-    procedure OutputCompResults(output: Integer);
+    procedure OutputResults(output,results: Integer);
     procedure PageHasChanged(Sender: TObject);
     procedure PageIsChanging(Sender: TObject; var AllowChange: Boolean);
     function PhotosPerCat(comp,cat: Integer): Integer;
@@ -162,6 +185,7 @@ type
     procedure PopulateComboBox(var cb: TComboBox;list: array of String);
     procedure print_btnClick(Sender: TObject);
     procedure PrintFooter;
+    procedure PrintHeader(title: String;cat: Integer);
     procedure PrintLine(S,font: String;size,x: Integer;style: TFontStyles);
     procedure RecalculateResults(comp: Integer);
     procedure RePopulateMembers;
@@ -171,7 +195,6 @@ type
     procedure season_titleExit(Sender: TObject);
     procedure settings_btnClick(Sender: TObject);
     procedure SetUpMembersList;
-    procedure SetUpVoteGraph(cat,comp: Integer);
     procedure ShowTally(Sender: TObject);
     procedure SortCompetitions(opening: Boolean);
     procedure SortMembers(opening: Boolean);
@@ -179,6 +202,7 @@ type
     procedure ValidateVSlips(num_vslips: Integer);
     function VSlipsPerComp(comp: Integer): Integer;
     procedure WebLinkBtnClick(Sender: TObject);
+    procedure adpMRU1Click(Sender: TObject; const FileName: string);
   private
     procedure WMDROPFILES(var msg : TWMDropFiles) ; message WM_DROPFILES;
   public
@@ -223,8 +247,6 @@ type
     cbox_author        : array of array of TComboBox;
     //Picture array for graphical voting display
     vote_graph         : array of TImage;
-    //Integer array to hold the max score per category (for the graph)
-//    high_score         : array of Integer;
     //Array of Add buttons
     add_btn,
     //Array of Open competiton buttons
@@ -240,8 +262,6 @@ type
     //Scroll box used on the voting slip page
     sb_vslip           : TScrollBox;
     const
-     //Date application was last updated
-     AppDate                           = '13th March 2017';
      //Column Left positions and widths for competition layouts
      ColumnPos: array[1..6] of Integer = ( 0, 20,220,420,460,540);
      ColumnWid: array[1..6] of Integer = (20,200,200, 40, 80, 40);
@@ -252,7 +272,7 @@ type
      //Height of all the controls
      controlheight                     = 22;
      //Version of file - this is different to application version
-     filever                           = '0.03';
+     filever                           = '0.05';
      //What to put when no photo title is entered
      blank_title                       = 'No Title Entered';
      //Hints for deleting/undeleting voting slips
@@ -264,13 +284,6 @@ type
      //Hints for internal/external judging
      int_judge_hint                    = 'Change to Internal Judging';
      ext_judge_hint                    = 'Change to External Judging';
-     //Voting graph constants
-     OriginX                           = 30; //Where the bottom left of the
-     OriginY                           = 25; //graph is, e.g. (0,0)
-     TitleHeight                       = 25; //Margin for the title
-     IDWidth                           = 50; //Margin for the IDs
-     xmulti                            = 20; //Multipliers - determines the
-     ymulti                            = 10; //scale of the graph
      //Printer Margins (pixels), before adding the above
      top_margin                        = 150;
      left_margin                       = 150;
@@ -284,30 +297,52 @@ var
 {NOTES
 
 To Do:
-* Annual Competition + Add settings for monthly positions to include
-* Dialogue box prior to printing/saving with same as preferences (does not get reset
-  after each visit, or saved to the registry)
-* Merge OutputAnnualResults and OutputCompResults
-* Add keyboard shortcuts to toolbar button hints
-* Add position tally to POY results
+* Annual Competition
+* Option to tabulate results on printer
+* Option to choose whether results are total or average
+  + In order to do this, we will need to record the number of photographs
+    entered per member per category. Currently, we only record the total number
+    of photographs per member across all competitions, and the POY tally will
+    only produce entries that have been placed in the top 20, or scored points
+    in the monthly.
 
 BUGS:
 }
 
 implementation
 
-{$R *.dfm}
+{$R *.lfm}
 
-uses AboutUnit,VotingUnit,SeasonDetailUnit,ResultsUnit,ShellAPI,ImportUnit,
-  SettingsUnit;
+uses AboutUnit,VotingUnit,SeasonDetailUnit,ResultsUnit,ImportUnit,
+  SettingsUnit,DetailSelectionUnit, ImportOnlineUnit;
 
 {-------------------------------------------------------------------------------
 Month control has changed
 -------------------------------------------------------------------------------}
 procedure TMainForm.comp_dateChange(Sender: TObject);
 begin
- season_titleExit(Sender);
- SortCompetitions(False);
+ //If it is not 'Annual'
+ if comp_date.ItemIndex<12 then
+ begin
+  season_titleExit(Sender);
+  SortCompetitions(False);
+ end
+ else
+ begin
+  //Otherwise revert
+  comp_date.ItemIndex:=comp_date.Tag;
+ end;
+ //This will prevent a user from making a competition 'Annual' or changing an
+ //'Annual' competition to a monthly
+end;
+
+{-------------------------------------------------------------------------------
+Month control has gained focus
+-------------------------------------------------------------------------------}
+procedure TMainForm.comp_dateEnter(Sender: TObject);
+begin
+ //Remember the previous setting
+ comp_date.Tag:=comp_date.ItemIndex;
 end;
 
 {-------------------------------------------------------------------------------
@@ -449,6 +484,8 @@ var
 begin
  //Set up form for new season
  SeasonDetailForm.existing:=False;
+ //Change Title
+ SeasonDetailForm.Caption:='Create New Season';
  //Open form
  SeasonDetailForm.ShowModal;
  //User clicked OK, then create season
@@ -466,6 +503,11 @@ begin
    season.m_Places_to_score:=SeasonDetailForm.ud_m_num_score.Position;
    season.Num_competitions :=SeasonDetailForm.ud_num_comps.Position;
    season.Start_Month      :=SeasonDetailForm.cb_start_month.ItemIndex+1;
+   season.IncEntries       :=SeasonDetailForm.ud_a_comp_entries.Position;
+   season.ScoreEntries     :=SeasonDetailForm.ud_score_entries.Position;
+   season.ScoreTotalm      :=SeasonDetailForm.rb_total_m.Checked;
+   season.ScoreTotala      :=SeasonDetailForm.rb_total_a.Checked;
+   season.SplitEqual       :=SeasonDetailForm.cb_splitequal.Checked;
    //--------Category Details--------
    SetLength(categories,season.Num_categories);
    for i:=0 to season.Num_categories-1 do
@@ -518,7 +560,7 @@ begin
   WriteLine(F,filever);
   //Write the header
   WriteLine(F,'------------------------------------------------------------------');
-  WriteLine(F,'ESCC Competitions ©Gerald J Holdsworth/East Sutherland Camera Club');
+  WriteLine(F,'ESCC Competitions Â©Gerald J Holdsworth/East Sutherland Camera Club');
   WriteLine(F,'Written by Gerald J Holdsworth. Graphics by Andy Kirby');
   WriteLine(F,'Version '+AppVersion+' ('+AppDate+')');
   WriteLine(F,'------------------------------------------------------------------');
@@ -532,6 +574,11 @@ begin
   WriteLine(F,IntToStr(season.Num_competitions));
   WriteLine(F,IntToStr(season.Start_Month));
   WriteLine(F,IntToStr(season.IncEntries));
+  WriteLine(F,IntToStr(season.ScoreEntries));
+  WriteLine(F,IntToStr(season.MaxEntries));
+  WriteLine(F,BoolToStr(season.SplitEqual));
+  WriteLine(F,BoolToStr(season.ScoreTotalm));
+  WriteLine(F,BoolToStr(season.ScoreTotala));
   //---------------------------------------------------------------------------
   WriteLine(F,'========Category Details========');
   for i:=0 to season.Num_categories-1 do
@@ -542,14 +589,8 @@ begin
   begin
    WriteLine(F,IntToStr(competitions[i].Month));
    WriteLine(F,competitions[i].Title);
-   if competitions[i].Ext_judge then
-    WriteLine(F,'TRUE')
-   else
-    WriteLine(F,'FALSE');
-   if competitions[i].Deleted then
-    WriteLine(F,'TRUE')
-   else
-    WriteLine(F,'FALSE');
+   WriteLine(F,BoolToStr(competitions[i].Ext_judge));
+   WriteLine(F,BoolToStr(competitions[i].Deleted));
   end;
   //---------------------------------------------------------------------------
    WriteLine(F,'========Scoring - annual========');
@@ -602,6 +643,7 @@ begin
     WriteLine(F,photographs[i].Voting);
     WriteLine(F,IntToStr(photographs[i].Score));
     WriteLine(F,photographs[i].Position);
+    WriteLine(F,BoolToStr(photographs[i].Ignore));
    end;
   //---------------------------------------------------------------------------
   WriteLine(F,'========Members========');
@@ -626,6 +668,7 @@ var
  confirm,c,i,j: Integer;
 begin
  SeasonDetailForm.existing:=True;
+ SeasonDetailForm.Caption:='Edit Season';
  SeasonDetailForm.ShowModal;
  //OK has been clicked, so update the settings
  if SeasonDetailForm.ModalResult=mrOK then
@@ -738,9 +781,14 @@ begin
   for c:=0 to Length(categories)-1 do
    categories[c]:=SeasonDetailForm.cats[c+1].Text;
   //Update all the other necessary parameters
-  season.Title:=SeasonDetailForm.season_title.Text;//Season Title
-  season_title.Text:=season.Title;//Update the title on the form
-  season.Start_Month:=SeasonDetailForm.cb_start_month.ItemIndex+1;
+  season.Title       :=SeasonDetailForm.season_title.Text;//Season Title
+  season_title.Text  :=season.Title;//Update the title on the form
+  season.Start_Month :=SeasonDetailForm.cb_start_month.ItemIndex+1;
+  season.IncEntries  :=SeasonDetailForm.ud_a_comp_entries.Position;
+  season.ScoreEntries:=SeasonDetailForm.ud_score_entries.Position;
+  season.ScoreTotalm :=SeasonDetailForm.rb_total_m.Checked;
+  season.ScoreTotala :=SeasonDetailForm.rb_total_a.Checked;
+  season.SplitEqual  :=SeasonDetailForm.cb_splitequal.Checked;
   //Annual Scoring
   SetLength(a_scoring,SeasonDetailForm.ud_a_num_score.Position);
   for i:=1 to SeasonDetailForm.ud_a_num_score.Position do
@@ -823,7 +871,8 @@ begin
   for i:=0 to Length(photographs)-1 do
    if  (photographs[i].Competition=comp_title.Tag)
    and (photographs[i].Category=e.Tag) then
-    if photographs[i].ID>e.Text then e.Text:=photographs[i].ID;
+    if ConvertFromID(photographs[i].ID)>ConvertFromID(e.Text) then
+     e.Text:=photographs[i].ID;
  end;
 end;
 
@@ -987,6 +1036,8 @@ begin
   //Delete the pages one by one
   if cat_pages.PageCount>0 then
    for i:=0 to cat_pages.PageCount-1 do
+    //We used the reference of 0 here because as each page is deleted, they each
+    //become reference number 0
     cat_pages.Pages[0].Free;
   //Disable the controls
   EnableControls(ec_OpenSeason);
@@ -1013,11 +1064,12 @@ Load an existing season
 -------------------------------------------------------------------------------}
 procedure TMainForm.LoadSeason(filename: String);
 var
- i,j: Integer;
- F,B: TFileStream;
- S,FileVersion: String;
+ i,j        : Integer;
+ F,B        : TFileStream;
+ S          : String;
+ FileVersion: Real;
  LoadSuccess: Boolean;
- buffer: array of ANSIChar;
+ buffer     : array of ANSIChar;
 begin
  //Flag to whether the load was successful
  LoadSuccess:=True;
@@ -1025,8 +1077,15 @@ begin
  F:=TFileStream.Create(filename,fmOpenRead);
  F.Seek(0,soFromBeginning);
  //Read version information
- ReadLine(F,FileVersion);
- if CompareVersion(FileVersion,'0.02') then //minimum version allowed
+ ReadLine(F,S);
+ //Remove any spurious characters at the front
+ if (Ord(S[1])<48) or (Ord(S[1])>57) then
+  repeat
+   S:=Copy(S,2,Length(S)-1);
+  until ((Ord(S[1])>47) and (ord(S[1])<58)) or (Length(S)=1);
+ //Convert to floating point
+ FileVersion:=StrToFloatDef(S,0.00);
+ if FileVersion>=0.02 then //minimum version allowed
  begin
   //Close the current season
   CloseSeason;
@@ -1034,120 +1093,142 @@ begin
   season.Filename:=filename;
   //---------------------------------------------------------------------------
   if SeekLn(F,'========Season Details========') then
-  begin
-   ReadLine(F,season.Title);
-   ReadLine(F,S);
-   season.Num_categories:=StrToIntDef(S,0);
-   ReadLine(F,S);
-   season.a_Places_to_score:=StrToIntDef(S,0);
-   ReadLine(F,S);
-   season.m_Places_to_score:=StrToIntDef(S,0);
-   ReadLine(F,S);
-   season.Num_competitions:=StrToIntDef(S,0);
-   if FileVersion='0.02' then
-   begin
-    season.Start_Month:=def_start_month;
-    season.IncEntries:=def_inc_entries;
-   end
-   else
-   begin
-    ReadLine(F,S);
-    season.Start_Month:=StrToIntDef(S,0);
-    ReadLine(F,S);
-    season.IncEntries:=StrToIntDef(S,0);
+  begin //Load Season Details (versions >=0.02)
+   ReadLine(F,season.Title); //Season Title
+   ReadLine(F,S);            //Number of Categories
+   season.Num_categories   :=StrToIntDef(S,def_num_categories);
+   ReadLine(F,S);            //POY Number of Places to Score
+   season.a_Places_to_score:=StrToIntDef(S,def_a_places_to_score);
+   ReadLine(F,S);            //Monthly Number of Places to Score
+   season.m_Places_to_score:=StrToIntDef(S,def_m_places_to_score);
+   ReadLine(F,S);            //Number of competitions in the season
+   season.Num_competitions :=StrToIntDef(S,def_num_categories);
+   if FileVersion=0.02 then
+   begin //Default values if version 0.02
+    season.Start_Month     :=def_start_month;
+    season.IncEntries      :=def_inc_entries;
+    season.ScoreTotalm     :=def_scoretotalm;
+    season.ScoreTotala     :=def_scoretotala;
+   end;
+   if FileVersion<0.05 then
+   begin //Default values for versions 0.02-0.04
+    season.ScoreEntries    :=def_score_entries;
+    season.MaxEntries      :=def_maxentries;
+    season.SplitEqual      :=def_splitequal;
+   end;
+   if FileVersion>0.02 then
+   begin //Values for versions >0.02
+    ReadLine(F,S);           //Start Month
+    season.Start_Month     :=StrToIntDef(S,def_start_month);
+    ReadLine(F,S);           //Entries to include in POY
+    season.IncEntries      :=StrToIntDef(S,def_inc_entries);
+    if FileVersion>0.04 then
+    begin //Values for versions >0.04
+     ReadLine(F,S);          //Number of entries, per member, to include in POY
+     season.ScoreEntries   :=StrToIntDef(S,def_score_entries);
+     ReadLine(F,S);          //Max number of entries, per member, per category
+     season.MaxEntries     :=StrToIntDef(S,def_maxentries);
+     ReadLine(F,S);          //Split the equal places or not
+     season.SplitEqual     :=S='TRUE';
+    end;
+    ReadLine(F,S);           //Total or Average scores (monthly)
+    season.ScoreTotalm     :=S='TRUE';
+    ReadLine(F,S);           //Total or Average scores (POY)
+    season.ScoreTotala     :=S='TRUE';
    end;
   end
-  else LoadSuccess:=False;
+  else LoadSuccess         :=False;
   //---------------------------------------------------------------------------
   if SeekLn(F,'========Category Details========') then
-  begin
+  begin //Category Details (all versions)
    SetLength(categories,season.Num_categories);
    for i:=0 to season.Num_categories-1 do
-    ReadLine(F,categories[i]);
+    ReadLine(F,categories[i]);//Category titles
   end
   else LoadSuccess:=False;
   //---------------------------------------------------------------------------
   if SeekLn(F,'========Competition Details========') then
-  begin
+  begin //Competition details (all versions)
    SetLength(competitions,season.Num_competitions);
    for i:=0 to season.Num_competitions-1 do
    begin
-    ReadLine(F,S);
+    ReadLine(F,S);           //Month of competition
     competitions[i].Month:=StrToIntDef(S,0);
-    ReadLine(F,competitions[i].Title);
-    ReadLine(F,S);
-    if S='TRUE' then
-     competitions[i].Ext_judge:=true
-    else
-     competitions[i].Ext_judge:=false;
-    ReadLine(F,S);
-    if S='TRUE' then
-     competitions[i].Deleted:=true
-    else
-     competitions[i].Deleted:=false;
+    ReadLine(F,competitions[i].Title);//Competition title
+    ReadLine(F,S);           //Externally judged?
+    competitions[i].Ext_judge:=S='TRUE';
+    ReadLine(F,S);           //Deleted entry?
+    competitions[i].Deleted:=S='TRUE';
    end;
   end
   else LoadSuccess:=False;
   //---------------------------------------------------------------------------
   if SeekLn(F,'========Scoring - annual========') then
-  begin
+  begin //POY Scoring (all versions)
    SetLength(a_scoring,season.a_Places_to_score);
    for i:=0 to season.a_Places_to_score-1 do
    begin
-    ReadLine(F,S);
+    ReadLine(F,S);           //Scores towards POY
     a_scoring[i]:=StrToIntDef(S,0);
    end;
   end
   else LoadSuccess:=False;
   //---------------------------------------------------------------------------
   if SeekLn(F,'========Scoring - monthly========') then
-  begin
+  begin //Monthly scoring (all versions)
    SetLength(m_scoring,season.m_Places_to_score);
    for i:=0 to season.m_Places_to_score-1 do
    begin
-    ReadLine(F,S);
+    ReadLine(F,S);           //Scores to use
     m_scoring[i]:=StrToIntDef(S,0);
    end;
   end
   else LoadSuccess:=False;
   //---------------------------------------------------------------------------
   if SeekLn(F,'========Voting Slips========') then
-  begin
+  begin //Voting slips (all versions)
    ReadLine(F,S); //Total number of voting slips
    SetLength(v_slips,StrToIntDef(S,0));
    for i:=0 to Length(v_slips)-1 do
    begin
-    ReadLine(F,S);
+    ReadLine(F,S);           //Competition number
     v_slips[i].Competition:=StrToIntDef(S,0);
-    ReadLine(F,S);
+    ReadLine(F,S);           //Category number
     v_slips[i].Category:=StrToIntDef(S,0);
-    v_slips[i].Used:=True;
+    v_slips[i].Used:=True;   //Deleted?
     SetLength(v_slips[i].Places,season.m_Places_to_score);
     for j:=0 to season.m_places_to_score-1 do
-     ReadLine(F,v_slips[i].Places[j]);
+     ReadLine(F,v_slips[i].Places[j]);//Places ranked
    end;
   end
   else LoadSuccess:=False;
   //---------------------------------------------------------------------------
   if SeekLn(F,'========Photographs========') then
-  begin
+  begin //Photograph details (all versions)
    ReadLine(F,S);
    SetLength(photographs,StrToIntDef(S,0)); //Total number of photographs
    for i:=0 to Length(photographs)-1 do
    begin
-    ReadLine(F,S);
+    ReadLine(F,S);           //Competition number
     photographs[i].Competition:=StrToIntDef(S,0);
-    ReadLine(F,S);
+    ReadLine(F,S);           //Category number
     photographs[i].Category:=StrToIntDef(S,0);
-    ReadLine(F,S);
+    ReadLine(F,S);           //Author number
     photographs[i].Author:=StrToIntDef(S,-1)+1;
-    ReadLine(F,photographs[i].Title);
-    ReadLine(F,photographs[i].ID);
-    ReadLine(F,photographs[i].Voting);
-    ReadLine(F,S);
+    ReadLine(F,photographs[i].Title); //Title
+    ReadLine(F,photographs[i].ID);    //ID given
+    ReadLine(F,photographs[i].Voting);//How was it voted
+    ReadLine(F,S);           //Calculated score
     photographs[i].Score:=StrToIntDef(S,0);
-    ReadLine(F,S);
+    ReadLine(F,S);           //Calculated position
     photographs[i].Position:=S;
+    if FileVersion<0.04 then
+     photographs[i].Ignore:=False //Deleted flag, default for version <0.04
+    else
+    begin
+     ReadLine(F,S);          //Deleted flag for versions >=0.04
+     photographs[i].Ignore:=S='TRUE';
+    end;
    end;
   end
   else LoadSuccess:=False;
@@ -1165,6 +1246,7 @@ begin
    SortCompetitions(True);
    //Populate the month combo box in the main part of the form
    PopulateComboBox(comp_date,MonthList);
+   //comp_date.Items.Delete(12);
    //Create a backup file
    F.Position:=0;
    j:=F.Size;
@@ -1175,6 +1257,8 @@ begin
    B.Free;
    //and finally sort the members into order
    SortMembers(True);
+   //Add to the Most Recently Used list
+   adpMRU1.AddItem(filename);
   end
   else ShowMessage('File Load Failure');
  end
@@ -1361,7 +1445,7 @@ begin
     and (photographs[y].Category=i) then
     begin
      AddPhotoControl(btn.Tag,i,y);
-     if photographs[y].ID>maxID[i] then
+     if ConvertFromID(photographs[y].ID)>ConvertFromID(maxID[i]) then
       maxID[i]:=photographs[y].ID;
     end;
     ProgressBar1.Position:=(i*(Length(photographs)-1))+y;
@@ -1442,23 +1526,30 @@ begin
  //Accept files being dragged into application
  DragAcceptFiles(Handle,True);
  //Set default values by reading them from the registry
- def_num_categories:=GetRegValI('Num_categories',c_def_num_categories);
+ def_num_categories   :=GetRegValI('Num_categories',c_def_num_categories);
  SetLength(def_categories,def_num_categories+1);
  for i:=1 to def_num_categories do
-  def_categories[i]:=GetRegValS('Categories\'+IntToStr(i),c_def_categories[i]);
+  def_categories[i]   :=GetRegValS('Categories\'+IntToStr(i),c_def_categories[i]);
  def_a_places_to_score:=GetRegValI('A_places_to_score',c_def_a_places_to_score);
  SetLength(def_a_scores,def_a_places_to_score+1);
  for i:=1 to def_a_places_to_score do
-  def_a_scores[i]:=c_def_a_scores[i];
+  def_a_scores[i]     :=c_def_a_scores[i];
  GetRegValA('Annual Scores',def_a_scores);
  def_m_places_to_score:=GetRegValI('M_places_to_score',c_def_m_places_to_score);
  SetLength(def_m_scores,def_m_places_to_score+1);
  for i:=1 to def_m_places_to_score do
-  def_m_scores[i]:=c_def_m_scores[i];
+  def_m_scores[i]     :=c_def_m_scores[i];
  GetRegValA('Monthly Scores',def_m_scores);
- def_num_competitions:=GetRegValI('Num_competitions',c_def_num_competitions);
- def_start_month:=GetRegValI('Start_Month',c_def_start_month);
- def_inc_entries:=GetRegValI('Included_Entries',c_def_inc_entries);
+ def_num_competitions :=GetRegValI('Num_competitions',c_def_num_competitions);
+ def_start_month      :=GetRegValI('Start_Month',c_def_start_month);
+ def_inc_entries      :=GetRegValI('Included_Entries',c_def_inc_entries);
+ def_score_entries    :=GetRegValI('Scored_Entries',c_def_score_entries);
+ def_maxentries       :=GetRegValI('Max_Entries',c_def_maxentries);
+ def_scoretotalm      :=GetRegValB('Score_Total_Monthly',c_def_scoretotalm);
+ def_scoretotala      :=GetRegValB('Score_Total_POY',c_def_scoretotala);
+ def_splitequal       :=GetRegValB('SplitEquals',c_def_splitequal);
+ //Set up most recently used list
+ adpMRU1.RegistryPath :=RegKey;
 end;
 
 {-------------------------------------------------------------------------------
@@ -1589,6 +1680,83 @@ begin
 end;
 
 {-------------------------------------------------------------------------------
+Delete a single photograph (menu selection)
+-------------------------------------------------------------------------------}
+procedure TMainForm.DelPhotoMenuClick(Sender: TObject);
+var
+ index,i,j,cat,R: Integer;
+ ID: String;
+begin
+ {This works differently than deleting redundant photos - this one is to delete
+ a single photograph, whether it has a score or not and whether it has an author
+ or not, and shift those below it up. The bottom one will be marked as -1 in the
+ competition and category fields to be ignored when saving.}
+ index:=GetTagFromControl(((Sender as TMenuItem).GetParentMenu as TPopUpMenu).PopupComponent);
+ if index>=0 then
+ begin
+  cat:=cat_pages.ActivePageIndex;
+  //Find the control index
+  i:=-1;
+  repeat
+   inc(i);
+  until (panl_ID[cat,i].Tag=index) or (i=Length(panl_ID[cat])-1);
+  if panl_ID[cat,i].Tag=index then
+  begin
+   //Confirm
+   R:=MessageDlg(
+      'Delete '+panl_ID[cat,i].Caption+': "'+edit_title[cat,i].Text+'"?'+#13#10+
+      'WARNING: THIS CANNOT BE UNDONE',
+      mtConfirmation,[mbYes,mbNo],0,mbNo);
+   if R=mrYes then
+   begin
+    //Move all from index+1 up by one
+    for j:=i+1 to Length(panl_ID[cat])-1 do
+    begin
+     ID:=photographs[panl_ID[cat,j-1].Tag].ID;
+     photographs[panl_ID[cat,j-1].Tag]:=photographs[panl_ID[cat,j].Tag];
+     photographs[panl_ID[cat,j-1].Tag].ID:=ID;
+     //Update the control, and mark empty photos
+     FillInPhotoControl(cat,j,panl_ID[cat,j-1].Tag);
+     MarkEmptyPhotos(cat,j);
+    end;
+    i:=Length(panl_ID[cat])-1;
+    DeletePhotograph(cat,i);
+    //Recalculate and Save results
+    RecalculateResults(comp_title.Tag);
+    SaveSeasonFile;
+   end;
+  end;
+ end;
+end;
+
+{-------------------------------------------------------------------------------
+Delete a single photograph (including the control)
+-------------------------------------------------------------------------------}
+procedure TMainForm.DeletePhotograph(cat,i: Integer);
+begin
+ //Delete final photograph
+ //Photographs get marked as -1 in the competition and category fields
+ //They will be ignored when saving.
+ photographs[panl_ID[cat,i].Tag].Competition:=-1;
+ photographs[panl_ID[cat,i].Tag].Category:=-1;
+ //Now we free up the controls and reduce the array lengths
+ panl_ID[cat,i].Free;
+ SetLength(panl_ID[cat],Length(panl_ID[cat])-1);
+ edit_title[cat,i].Free;
+ SetLength(edit_title[cat],Length(edit_title[cat])-1);
+ cbox_author[cat,i].Free;
+ SetLength(cbox_author[cat],Length(cbox_author[cat])-1);
+ edit_score[cat,i].Free;
+ SetLength(edit_score[cat],Length(edit_score[cat])-1);
+ edit_voting[cat,i].Free;
+ SetLength(edit_voting[cat],Length(edit_voting[cat])-1);
+ edit_place[cat,i].Free;
+ SetLength(edit_place[cat],Length(edit_place[cat])-1);
+ //Move the add button back up
+ add_btn[cat].Top:=(Length(panl_ID[cat])+1)*controlheight;
+end;
+
+{-------------------------------------------------------------------------------
 Work out number of photographs for this category in this competition
 -------------------------------------------------------------------------------}
 function TMainForm.PhotosPerCat(comp,cat: Integer): Integer;
@@ -1704,9 +1872,17 @@ begin
  edit_voting[cat,y-1] :=CreateEdit(ColumnPos[5],y*controlheight,ColumnWid[5],true,SB);
  edit_place[cat,y-1]  :=CreateEdit(ColumnPos[6],y*controlheight,ColumnWid[6],true,SB);
  //Setup the event handlers
+ panl_ID[cat,y-1].OnClick:=IgnorePhoto;
  edit_title[cat,y-1].OnExit:=season_titleExit;
  edit_title[cat,y-1].OnKeyPress:=EditorKeyPress;
  cbox_author[cat,y-1].OnChange:=season_titleExit;
+ //Right click menu
+ panl_ID[cat,y-1].PopupMenu:=PhotoMenu;
+ edit_title[cat,y-1].PopupMenu:=PhotoMenu;
+ cbox_author[cat,y-1].PopupMenu:=PhotoMenu;
+ edit_score[cat,y-1].PopupMenu:=PhotoMenu;
+ edit_voting[cat,y-1].PopupMenu:=PhotoMenu;
+ edit_place[cat,y-1].PopupMenu:=PhotoMenu;
  if competitions[comp].Ext_judge then
  begin
   edit_score[cat,y-1].OnExit:=season_titleExit;
@@ -1727,19 +1903,69 @@ begin
 end;
 
 {-------------------------------------------------------------------------------
+Set photo as 'ignored'
+-------------------------------------------------------------------------------}
+procedure TMainForm.IgnorePhoto(Sender: TObject);
+var
+ cat,p,index: Integer;
+begin
+ index:=GetTagFromControl(Sender);
+ if index>=0 then
+ begin
+  //Just flag it
+  photographs[index].Ignore:=not photographs[index].Ignore;
+  //And recolour it
+  for cat:=0 to Length(panl_ID)-1 do
+   for p:=0 to Length(panl_ID[cat])-1 do
+    MarkEmptyPhotos(cat,p+1);
+  //Then remove it from the results
+  RecalculateResults(comp_title.Tag);
+ end;
+end;
+
+{-------------------------------------------------------------------------------
+Get the Tag from a control, type unknown. Returns -1 if type not known
+-------------------------------------------------------------------------------}
+function TMainForm.GetTagFromControl(Sender: TObject): Integer;
+begin
+ Result:=-1; //In case it is none of these controls
+ If Sender is TPanel    then Result:=(Sender as TPanel).Tag;
+ if Sender is TEdit     then Result:=(Sender as TEdit).Tag;
+ if Sender is TComboBox then Result:=(Sender as TComboBox).Tag;
+end;
+
+{-------------------------------------------------------------------------------
+Ignore menu item clicked
+-------------------------------------------------------------------------------}
+procedure TMainForm.IgnPhotoMenuClick(Sender: TObject);
+begin
+ //Just find the appropriate calling control and pass to the IgnorePhoto procedure
+ IgnorePhoto(((Sender as TMenuItem).GetParentMenu as TPopUpMenu).PopupComponent);
+end;
+
+{-------------------------------------------------------------------------------
 Mark Photo if title or author are 'blank'
 -------------------------------------------------------------------------------}
 procedure TMainForm.MarkEmptyPhotos(cat,y: Integer);
 const
  blank  = clYellow;
  filled = clBtnFace;
+ ignore = clRed;
 begin
+ //Check to see if the title is not filled in
  if (edit_title[cat,y-1].Text=blank_title)
  or (edit_title[cat,y-1].Text='')
+ //or the author not filled in
  or (cbox_author[cat,y-1].ItemIndex=0) then
-  panl_ID[cat,y-1].Color:=blank
+  panl_ID[cat,y-1].Color:=blank //Make it a stand out
  else
-  panl_ID[cat,y-1].Color:=filled;
+  panl_ID[cat,y-1].Color:=filled; //otherwise make it the same as the rest
+ //Is the photo marked as 'ignored'
+ if photographs[panl_ID[cat,y-1].Tag].Ignore then
+  panl_ID[cat,y-1].Color:=ignore;
+ //If the title is blank, put the blank text in
+ if edit_title[cat,y-1].Text='' then
+  edit_title[cat,y-1].Text:=blank_title;
 end;
 
 {-------------------------------------------------------------------------------
@@ -1771,7 +1997,161 @@ Show Annual Results button has been clicked
 -------------------------------------------------------------------------------}
 procedure TMainForm.btn_a_resultsClick(Sender: TObject);
 begin
-  OutputAnnualResults(1);
+ OutputResults(1,1);
+end;
+
+
+{-------------------------------------------------------------------------------
+Import voting slip from website
+-------------------------------------------------------------------------------}
+procedure TMainForm.ImportOnlineComp(Sender: TObject);
+var
+ R,
+ num_cats,
+ cat,
+ photo,
+ vote,
+ i,e,
+ progress: Integer;
+ slip    : array of array of array of String;
+ match   : Boolean;
+ temp    : String;
+begin
+ if ImportOnlineForm.ShowModal=mrOK then
+ begin
+  R:=MessageDlg(
+      'Are you sure you wish to do this?'+#13#10+
+      'It will delete the contents of the currently selected competition.'+#13#10+
+      'WARNING: THIS CANNOT BE UNDONE',
+      mtConfirmation,[mbYes,mbNo],0,mbNo);
+  if R=mrYes then
+  begin
+   num_cats:=Length(ImportOnlineForm.Categories);
+   progress:=0;
+   //Only continue if the number of categories match
+   if num_cats=Length(categories) then
+   begin
+    //Check the category names and only continue if match
+    match:=True;
+    for cat:=0 to num_cats-1 do
+    begin
+     if categories[cat]<>ImportOnlineForm.Categories[cat] then match:=False;
+     inc(progress,Length(ImportOnlineForm.Photographs[cat]));
+     if cat<Length(panl_ID) then inc(progress,Length(panl_ID[cat]));
+    end;
+    if match then
+    begin
+     inc(progress,Length(panl_vslip));
+     //Setup the progress bar
+     ProgressBar1.Max:=progress;
+     ProgressBar1.Position:=0;
+     ProgressBar1.Update;
+     progress:=0;
+     //Delete all entries in each category
+     for cat:=0 to num_cats-1 do
+      for photo:=Length(panl_ID[cat])-1 downto 0 do
+      begin
+       DeletePhotograph(cat,photo);
+       inc(progress);
+       ProgressBar1.Position:=progress;
+       ProgressBar1.Update;
+      end;
+     //Delete all voting slips
+     for vote:=Length(panl_vslip)-1 downto 0 do
+     begin
+      //Delete the slips
+      for cat:=0 to num_cats-1 do
+      begin
+       v_slips[panl_vslip[vote].Tag+cat].Used:=False;
+       v_slips[panl_vslip[vote].Tag+cat].Competition:=-1;
+       v_slips[panl_vslip[vote].Tag+cat].Category:=-1;
+      end;
+      //Delete the controls
+      panl_vslip[vote].Free;
+      delvotslip_btn[vote].Free;
+      for i:=0 to Length(edit_vslip[vote])-1 do
+       for e:=0 to Length(edit_vslip[vote,i])-1 do
+       begin
+        edit_vslip[vote,i,e].Free;
+        inc(progress);
+        ProgressBar1.Position:=progress;
+        ProgressBar1.Update;
+       end;
+     end;
+     SetLength(panl_vslip,    0);
+     SetLength(delvotslip_btn,0);
+     SetLength(edit_vslip,    0);
+     //Import all entries in each category
+     for cat:=0 to num_cats-1 do
+      for photo:=0 to Length(ImportOnLineForm.Photographs[cat])-1 do
+      begin
+       AddNewPhotograph(cat);
+       i:=Length(photographs)-1;
+       photographs[i].Title:=ImportOnlineForm.Photographs[cat,photo];
+       photographs[i].Score:=0;
+       photographs[i].Position:='0';
+       photographs[i].Voting:='';
+       photographs[i].Author:=FindAuthor(ImportOnlineForm.Authors[cat,photo]);
+       e:=Length(panl_ID[cat])-1;
+       edit_title[cat,e].Text      :=photographs[i].Title;
+       edit_score[cat,e].Text      :=IntToStr(photographs[i].Score);
+       cbox_author[cat,e].ItemIndex:=photographs[i].Author;
+       edit_voting[cat,e].Text     :=photographs[i].Voting;
+       edit_place[cat,e].Text      :=photographs[i].Position;
+       MarkEmptyPhotos(cat,e+1);
+       inc(progress);
+       ProgressBar1.Position:=progress;
+       ProgressBar1.Update;
+      end;
+     //Import all voting slips
+     SetLength(slip,Length(ImportOnlineForm.VoteSlips),num_cats,season.m_Places_to_score);
+     //Decode the CSV format into a temporary array
+     for vote:=0 to Length(ImportOnlineForm.VoteSlips)-1 do
+     begin
+      temp:=ImportOnlineForm.VoteSlips[vote];
+      cat:=0;
+      e:=0;
+      while Pos(',',temp,1)<>0 do
+      begin
+       temp:=Copy(temp,Pos(',',temp,1)+1,Length(temp));
+       slip[vote,cat,e]:=LeftStr(temp,Pos(',',temp,1)-1);
+       inc(e);
+       if e=season.m_Places_to_score then
+       begin
+        e:=0;
+        inc(cat);
+        if cat>=num_cats then cat:=num_cats-1;
+       end;
+      end;
+      slip[vote,num_cats-1,season.m_Places_to_score-1]:=temp;
+      //Add a new voting slip, including the controls
+      AddNewVotingSlip(False);
+      //Get the reference for the new voting slip
+      e:=panl_vslip[Length(panl_vslip)-1].Tag;
+      //Now populate the places
+      for cat:=0 to num_cats-1 do
+       for i:=0 to season.m_Places_to_score-1 do
+        if slip[vote,cat,i]<>'-1' then
+        begin
+         v_slips[e+cat].Places[i]:=ConvertToId(StrToIntDef(slip[vote,cat,i],0)+1);
+         edit_vslip[Length(edit_vslip)-1,cat,i].Text:=v_slips[e+cat].Places[i];
+        end;
+      inc(progress);
+      ProgressBar1.Position:=progress;
+      ProgressBar1.Update;
+     end;
+     RecalculateResults(comp_title.Tag);
+     SaveSeasonFile;
+     ProgressBar1.Position:=0;
+     ProgressBar1.Update;
+    end
+    else
+     MessageDlg('Category names differ. Cannot continue.',mtError,[mbOK],0);
+   end
+   else
+    MessageDlg('Number of categories differ. Cannot continue.',mtError,[mbOK],0);
+  end;
+ end;
 end;
 
 {-------------------------------------------------------------------------------
@@ -1779,7 +2159,7 @@ Print Annual Results button has been clicked
 -------------------------------------------------------------------------------}
 procedure TMainForm.btn_prt_a_resultsClick(Sender: TObject);
 begin
- if PrintDialog1.Execute then OutputAnnualResults(3);
+ if PrintDialog1.Execute then OutputResults(3,1);
 end;
 
 {-------------------------------------------------------------------------------
@@ -1788,7 +2168,7 @@ Save Annual Results button has been clicked
 procedure TMainForm.btn_save_a_resultsClick(Sender: TObject);
 begin
  csv_Save.FileName:=MakeFilenameValid('Photographers Of The Year '+season.Title+'.csv');
- if csv_Save.Execute then OutputAnnualResults(2);
+ if csv_Save.Execute then OutputResults(2,1);
 end;
 
 {-------------------------------------------------------------------------------
@@ -1877,282 +2257,33 @@ begin
 end;
 
 {-------------------------------------------------------------------------------
-Calculate Annual Results
--------------------------------------------------------------------------------}
-procedure TMainForm.OutputAnnualResults(output: Integer);
-type
- Tmem_pos = Record
-  Pos: Integer;
-  equal: Boolean;
-  Name: String;
-  Score: Integer;
-  Tally: String;
- end;
-var
- photo,cat,author,place,i,pos,h: Integer;
- S: String;
- labels: array of array of TLabel;
- page: TTabSheet;
- SB: TScrollBox;
- p: array of Integer;
- ps: array of String;
- c: array of Boolean;
- equal: Boolean;
- mem_pos: array of array of Tmem_pos;
- F: TextFile;
-begin
- //Procedure is in two parts - first part calculates the annual scores
- SB:=nil;
- h:=0;
- //Blank the scores
- for author:=0 to Length(members)-1 do
-  for cat:=0 to season.Num_categories-1 do
-  begin
-   members[author].Score[cat]:=0;
-   members[author].Tally[cat]:=IntToPadStr(0,'0',season.a_Places_to_score*2);
-  end;
- //Recalculate the results for all the competitions
- for i:=0 to season.Num_competitions-1 do
-  RecalculateResults(i);
- //Go through each photograph and add up the scores
- for photo:=0 to Length(photographs)-1 do
- begin
-  author:=photographs[photo].Author; //Get the author
-  cat:=photographs[photo].Category;  //Get the category
-  S:=photographs[photo].Position;    //Get the position
-  if Copy(S,Length(S),1)='=' then
-   S:=Copy(S,1,Length(S)-1);         //Remove the '='
-  if S<>'' then                      //If photo was placed
-  begin
-   place:=StrToIntDef(S,1)-1;        //Convert to an integer
-   if  (photographs[photo].Score>0)  //Only take note if score is >0
-   and (place<season.a_Places_to_score) then //and within the places to score
-   begin
-    members[author].Score[cat]:=members[author].Score[cat]
-                               +a_scoring[place];
-    //We'll add up the positions they've acheived while we're here
-    i:=StrToInt(Copy(members[author].Tally[cat],(place*2)+1,2));
-    inc(i);
-    members[author].Tally[cat]:=Copy(members[author].Tally[cat],0,place*2)
-                               +IntToPadStr(i,'0',2)
-                               +Copy(members[author].Tally[cat],((place+1)*2)+1);
-   end;
-  end;
- end;
- //Save the results
- SaveSeasonFile;
- //Now the second part of the procedure - outputting the results
- if output=1 then //Display in a form
- begin
-  //First clear the form, should it already contain data
-  For i:=0 to ResultsForm.pages.PageCount-1 do
-   ResultsForm.pages.ActivePage.Free;
-  //Then fill in the headers
-  ResultsForm.Caption:='Photographers of the Year Results';
-  ResultsForm.header.Caption:='Photographers of the Year';
-  //Make room for the controls
-  SetLength(labels,season.Num_categories);
- end;
- if output=2 then //Save to a file
- begin
-  AssignFile(F,csv_Save.FileName);
-  ReWrite(F);
- end;
- if output=3 then
- begin
-  //Setup the printer
-  Printer.Title:='ESCC Competitions Photographers of the Year Results';
-  Printer.Copies:=1;
-  h:=Printer.PageHeight;
-  Printer.BeginDoc;
- end;
- //This is a local copy of the members array, so we can re-sort it
- //And it's an array per category
- SetLength(mem_pos,season.Num_categories);
- //Set up the form/file
- for cat:=0 to season.Num_categories-1 do
- begin
-  if output=1 then //Display in a form
-  begin
-   //Create the page and scroll box
-   page:=CreatePage(ResultsForm.pages,categories[cat]);
-   SB:=CreateScrollBox(page);
-   SetLength(labels[cat],length(members));
-  end;
-  if output=2 then //Save to a file
-  begin
-   WriteLn(F,'"'+categories[cat]+' Category"');
-   S:='"Position","Photographer","Score"';
-   for i:=0 to season.a_Places_to_score-1 do
-    S:=S+',"'+IntToPos(i+1)+'s"';
-   WriteLn(F,S);
-  end;
-  if output=3 then
-  begin
-   //Print the header for each category
-   Printer.Canvas.Draw(left_margin,top_margin,ESCCLogo.Picture.Graphic);
-   Printer.Canvas.MoveTo(left_margin,top_margin);
-   Printer.Canvas.Font.Color:=clBlue;
-   PrintLine(season.Title+' season','Arial',24,-1,[fsBold]);
-   PrintLine('Photographers of the Year Results','Arial',20,-1,[fsBold]);
-   PrintLine(categories[cat]+' Category','Arial',16,-1,[fsBold]);
-   Printer.Canvas.Font.Color:=clBlack;
-   Printer.Canvas.Pen.Color:=clRed;
-   Printer.Canvas.MoveTo(left_margin,Printer.Canvas.PenPos.Y);
-   Printer.Canvas.LineTo(Printer.PageWidth-right_margin,Printer.Canvas.PenPos.Y);
-   Printer.Canvas.MoveTo(left_margin,Printer.Canvas.PenPos.Y+50);
-  end;
-  SetLength(mem_pos[cat],Length(members));
-  //set up array for sorting
-  SetLength(p,Length(members));
-  //Set up array for checking if sorted
-  SetLength(c,Length(members));
-  for i:=1 to Length(members)-1 do
-  begin
-   //copy the scores
-   p[i-1]:=members[i].Score[cat];
-   //and reset the checks
-   c[i-1]:=false;
-  end;
-  //Sort the scores
-  ArraySort(p);
-  //and update the placings in the local members array
-  place:=0;
-  for author:=0 to Length(p)-1 do
-   for i:=1 to Length(members)-1 do
-    if  (p[author]=members[i].Score[cat])
-    and (not c[i-1])
-    and (members[i].Score[cat]>0) then
-    begin
-     mem_pos[cat,place].Pos:=author+1;
-     mem_pos[cat,place].Name:=MembersList[i];
-     mem_pos[cat,place].Score:=members[i].Score[cat];
-     mem_pos[cat,place].Tally:=IntToPadStr(100-author,'0',3)+members[i].Tally[cat];
-     c[i-1]:=true;
-     inc(place);
-    end;
-  //Split the equal places
-  SetLength(ps,Length(mem_pos[cat]));
-  //And reset the checks
-  SetLength(c,Length(mem_pos[cat]));
-  for i:=0 to Length(ps)-1 do
-  begin
-   ps[i]:=mem_pos[cat,i].Tally;
-   c[i]:=false;
-  end;
-  ArraySort(ps);
-  for place:=0 to Length(ps)-1 do
-  begin
-   equal:=false;
-   for author:=0 to Length(mem_pos[cat])-1 do
-    if  (ps[place]=mem_pos[cat,author].Tally)
-    and (not c[author]) then
-    begin
-     mem_pos[cat,author].Pos:=place+1;
-     mem_pos[cat,author].equal:=equal;
-     //This marks them as equal placed, plus the one before
-     if (equal) and (author>0) then
-      mem_pos[cat,author-1].equal:=equal;
-     equal:=True;
-     c[author]:=True;
-    end;
-  end;
-  //Output the results
-  pos:=0;
-  for place:=1 to Length(mem_pos[cat]) do
-  begin
-   for author:=0 to Length(mem_pos[cat])-1 do
-    if  (mem_pos[cat,author].Pos=place)
-    and (mem_pos[cat,author].Score>0) then
-    begin
-     if (output=1) or (output=3) then
-     begin
-      S:=IntToPos(place);
-      if mem_pos[cat,author].equal then S:=S+'=';
-      S:=S+' '+mem_pos[cat,author].Name
-          +' scored '+IntToStr(mem_pos[cat,author].Score)
-          +' points';
-      if output=1 then
-      begin
-       labels[cat,place-1]:=CreateLabel(S,0,pos,SB);
-       pos:=pos+20;
-      end;
-      if output=3 then
-      begin
-       PrintLine(S,'Arial',10,left_margin,[]);
-       if Printer.Canvas.PenPos.Y>h-bottom_margin-442 then
-       begin
-        PrintFooter;
-        Printer.NewPage;
-       end;
-      end;
-     end;
-     if output=2 then
-     begin
-      S:='"'+IntToPos(place);
-      if mem_pos[cat,author].equal then S:=S+'=';
-      S:=S+'","'+mem_pos[cat,author].Name+'",'
-          +'"'+IntToStr(mem_pos[cat,author].Score)+'"';
-      for i:=0 to season.a_Places_to_score-1 do
-       S:=S+',"'+Copy(mem_pos[cat,author].Tally,(i*2)+1+3,2)+'"';
-      WriteLn(F,S);
-     end;
-     mem_pos[cat,author].Pos:=0;
-    end;
-  end;
-  if output=3 then
-  begin
-   PrintFooter;
-   if cat<season.Num_categories-1 then Printer.NewPage;
-  end;
- end;
- if output=1 then
- begin
-  ResultsForm.ShowModal;
-  for i:=0 to ResultsForm.pages.PageCount-1 do
-   ResultsForm.pages.ActivePage.Free;
- end;
- if output=2 then CloseFile(F);
- if output=3 then Printer.EndDoc;
-end;
-
-{-------------------------------------------------------------------------------
 Delete Redundant Photographs
 -------------------------------------------------------------------------------}
-procedure TMainForm.DeletePhotographs(Sender: TObject);
+procedure TMainForm.DeleteRedundantPhotographs(Sender: TObject);
 var
  i,cat: Integer;
  found_high: Boolean;
 begin
+ //Recalculate the results so we can delete those with zero score
  RecalculateResults(comp_title.Tag);
+ //Go through each category
  for cat:=0 to season.Num_categories-1 do
  begin
   i:=Length(panl_ID[cat])-1;
-  found_high:=false;
+  found_high:=false; //'found' flag
+  //We'll start at the end and work back until we find a photograph with a score
+  //and an author
   while (found_high=false) and (i>=0) do
   begin
    if (edit_score[cat,i].Text='0') and (cbox_author[cat,i].ItemIndex=0) then
-   begin
-    photographs[panl_ID[cat,i].Tag].Competition:=-1;
-    photographs[panl_ID[cat,i].Tag].Category:=-1;
-    panl_ID[cat,i].Free;
-    SetLength(panl_ID[cat],Length(panl_ID[cat])-1);
-    edit_title[cat,i].Free;
-    SetLength(edit_title[cat],Length(edit_title[cat])-1);
-    cbox_author[cat,i].Free;
-    SetLength(cbox_author[cat],Length(cbox_author[cat])-1);
-    edit_score[cat,i].Free;
-    SetLength(edit_score[cat],Length(edit_score[cat])-1);
-    edit_voting[cat,i].Free;
-    SetLength(edit_voting[cat],Length(edit_voting[cat])-1);
-    edit_place[cat,i].Free;
-    SetLength(edit_place[cat],Length(edit_place[cat])-1);
-   end
+    DeletePhotograph(cat,i)
    else found_high:=True;
    dec(i);
   end;
-  add_btn[cat].Top:=(Length(panl_ID[cat])+1)*controlheight;
+{  //Move the add button back up
+  add_btn[cat].Top:=(Length(panl_ID[cat])+1)*controlheight;}
  end;
+ //and finally save the data file
  SaveSeasonFile;
 end;
 
@@ -2180,25 +2311,29 @@ begin
   //Continue setting up Import Dialogue Box, if there are enough columns
   if X>=2 then
   begin
+   //Set all the headers to 'Don't Import', and the widths to 128px
    for i:=0 to ImportForm.sg_Columns.ColCount-1 do
    begin
     ImportForm.sg_Columns.Cells[i,0]:=ImportForm.cb_ColContents.Items[0];
-    ImportForm.sg_Columns.ColWidths[i]:=128;
+    if i>0 then
+     ImportForm.sg_Columns.ColWidths[i]:=128
+    else
+     ImportForm.sg_Columns.ColWidths[i]:=192;
    end;
+   //Put the title in the first column
    PhotoTitleCol:=0;
+   //Add the text
    ImportForm.sg_Columns.Cells[PhotoTitleCol,0]:=
                                       ImportForm.cb_ColContents.Items[2];
-   if X=2 then AuthorCol:=1;
-   if X>2 then
-   begin
-    ScoreCol:=1;
-    AuthorCol:=2;
-   end;
+   //Depending on the number of columns, arrange the other fields
+   if X>1 then AuthorCol:=1;
+   if X>2 then PosCol:=2;
    if X>3 then
    begin
-    PosCol:=2;
-    AuthorCol:=3;
+    ScoreCol:=2;
+    PosCol:=3;
    end;
+   //And then put the text in
    if AuthorCol>=0 then
     ImportForm.sg_Columns.Cells[AuthorCol,0]:=
                                       ImportForm.cb_ColContents.Items[1];
@@ -2262,6 +2397,45 @@ begin
 end;
 
 {-------------------------------------------------------------------------------
+Insert photo (menu click)
+-------------------------------------------------------------------------------}
+procedure TMainForm.InsPhotoMenuClick(Sender: TObject);
+var
+ index,cat,i: Integer;
+ ID: String;
+begin
+ {This needs to shift everything down by one, adding a new one at the bottom.}
+ index:=GetTagFromControl(((Sender as TMenuItem).GetParentMenu as TPopUpMenu).PopupComponent);
+ if index>=0 then
+ begin
+  cat:=cat_pages.ActivePageIndex;
+  //Add new photograph
+  AddNewPhotograph(cat);
+  //Move all from index to the end down by one (except ID)
+  i:=Length(panl_ID[cat])-1;
+  repeat
+   ID:=photographs[panl_ID[cat,i].Tag].ID;
+   photographs[panl_ID[cat,i].Tag]:=photographs[panl_ID[cat,i-1].Tag];
+   photographs[panl_ID[cat,i].Tag].ID:=ID;
+   //Update the control, and mark empty photos
+   FillInPhotoControl(cat,i+1,panl_ID[cat,i].Tag);
+   dec(i);
+  until (panl_ID[cat,i].Tag=index) or (i=0);
+  //Blank off index details (except ID)
+  photographs[index].Title:='';
+  photographs[index].Author:=0;
+  photographs[index].Score:=0;
+  photographs[index].Position:='';
+  photographs[index].Tally:='';
+  photographs[index].Voting:='';
+  MarkEmptyPhotos(cat,i+1);
+  //Recalculate results and save data
+  RecalculateResults(comp_title.Tag);
+  SaveSeasonFile;
+ end;
+end;
+
+{-------------------------------------------------------------------------------
 Recalculate Results
 -------------------------------------------------------------------------------}
 procedure TMainForm.btn_recalculateClick(Sender: TObject);
@@ -2274,7 +2448,7 @@ Show competition results
 -------------------------------------------------------------------------------}
 procedure TMainForm.btn_resultsClick(Sender: TObject);
 begin
- OutputCompResults(1);
+ OutputResults(1,0);
 end;
 
 {-------------------------------------------------------------------------------
@@ -2284,7 +2458,7 @@ procedure TMainForm.btn_saveresultsClick(Sender: TObject);
 begin
  csv_Save.FileName:=MakeFilenameValid(comp_title.Text+
                     ' ('+MonthList[competitions[comp_title.Tag].Month+1]+').csv');
- if csv_Save.Execute then OutputCompResults(2);
+ if csv_Save.Execute then OutputResults(2,0);
 end;
 
 {-------------------------------------------------------------------------------
@@ -2292,178 +2466,7 @@ Print competition results
 -------------------------------------------------------------------------------}
 procedure TMainForm.print_btnClick(Sender: TObject);
 begin
- if PrintDialog1.Execute then OutputCompResults(3);
-end;
-
-{-------------------------------------------------------------------------------
-Output competition results
--------------------------------------------------------------------------------}
-procedure TMainForm.OutputCompResults(output: Integer);
-var
- cat,i,j,pos,k,h: Integer;
- S,P,e: String;
- labels: array of array of TLabel;
- buttons: array of array of TSpeedButton;
- page: TTabSheet;
- SB: TScrollBox;
- F: TextFile;
-begin
- h:=0;
- SB:=nil;
- RecalculateResults(comp_title.Tag);
- SaveSeasonFile;
- if output=1 then
- begin
-  //First clear the form, should it already contain data
-  For i:=0 to ResultsForm.pages.PageCount-1 do
-   ResultsForm.pages.ActivePage.Free;
-  //Then fill in the headers
-  ResultsForm.Caption:='Monthly Competition Results';
-  ResultsForm.header.Caption:=comp_title.Text+
-                         ' ('+MonthList[competitions[comp_title.Tag].Month+1]+')';
-  //Make room for the controls
-  SetLength(labels,season.Num_categories);
-  SetLength(buttons,season.Num_categories);
- end;
- if output=2 then
- begin
-  //Create the file
-  AssignFile(F,csv_Save.FileName);
-  ReWrite(F);
- end;
- if output=3 then
- begin
-  //Setup the printer
-  Printer.Title:='ESCC Competitions '+competitions[comp_title.Tag].Title+' Results';
-  Printer.Copies:=1;
-  h:=Printer.PageHeight;
-  Printer.BeginDoc;
- end;
- //Cycle through the categories
- for cat:=0 to season.Num_categories-1 do
- begin
-  if output=1 then
-  begin
-   //Create a page for each category
-   page:=CreatePage(ResultsForm.pages,categories[cat]);
-   SB:=CreateScrollBox(page);
-  end;
-  if output=2 then
-  begin
-   //Write out the category name, and column headers
-   WriteLn(F,'"'+categories[cat]+' Category"');
-   S:='"Position","Photo Title","Photo Author","Photo ID","Score"';
-   if not competitions[comp_title.Tag].Ext_judge then
-    for i:=0 to season.m_Places_to_score-1 do
-     S:=S+',"'+IntToPos(i+1)+'s"';
-   WriteLn(F,S);
-  end;
-  if output=3 then
-  begin
-   //Print the header for each category
-   Printer.Canvas.Draw(left_margin,top_margin,ESCCLogo.Picture.Graphic);
-   Printer.Canvas.MoveTo(left_margin,top_margin);
-   Printer.Canvas.Font.Color:=clBlue;
-   PrintLine(season.Title+' season','Arial',24,-1,[fsBold]);
-   PrintLine(competitions[comp_title.Tag].Title+' Results','Arial',20,-1,[fsBold]);
-   PrintLine(categories[cat]+' Category','Arial',16,-1,[fsBold]);
-   Printer.Canvas.Font.Color:=clBlack;
-   Printer.Canvas.Pen.Color:=clRed;
-   Printer.Canvas.MoveTo(left_margin,Printer.Canvas.PenPos.Y);
-   Printer.Canvas.LineTo(Printer.PageWidth-right_margin,Printer.Canvas.PenPos.Y);
-   Printer.Canvas.MoveTo(left_margin,Printer.Canvas.PenPos.Y+50);
-  end;
-  i:=0; //Control number
-  pos:=1; //position number
-  repeat
-   //We'll go through all the photos and find those relevant
-   for j:=0 to Length(photographs)-1 do
-    if  (photographs[j].Competition=comp_title.Tag)
-     and (photographs[j].Category=cat) then
-    begin
-     //then pick out those that are at position 'pos'
-     P:=photographs[j].Position;
-     if Copy(P,Length(P),1)='=' then
-     begin
-      P:=Copy(P,1,Length(P)-1);
-      e:=IntToPos(StrToInt(P))+'=';
-     end
-     else e:=IntToPos(StrToInt(P));
-     if StrToInt(P)=pos then
-     begin
-      if (output=1) or (output=3) then
-       S:='"'+photographs[j].Title+'"'+
-          ' by '+MembersList[photographs[j].Author]+
-          ' ('+photographs[j].ID+')'+
-          ' scored '+IntToStr(photographs[j].Score)+' points';
-      if output=2 then
-       S:='"'+photographs[j].Title+'",'+
-          '"'+MembersList[photographs[j].Author]+'",'+
-          '"'+photographs[j].ID+'",'+
-          '"'+IntToStr(photographs[j].Score)+'"';
-      if not competitions[comp_title.Tag].Ext_judge then
-       if (output=2) or (output=3) then
-        for k:=0 to season.m_places_to_score-1 do
-        begin
-         if output=2 then
-          S:=S+',"'+Copy(photographs[j].Tally,(k*2)+1+3,2)+'"';
-         if output=3 then
-         begin
-          if k>0 then S:=S+', ' else S:=S+' (';
-          S:=S+IntToPos(k+1)+'s:'
-              +IntToStr(StrToInt(Copy(photographs[j].Tally,(k*2)+1+3,2)));
-          if k=season.m_Places_to_score-1 then S:=S+')';
-         end;
-        end;
-      //which could be an equal position
-//      if last=pos then e:=' = ' else e:=IntToPos(pos);
-//      last:=pos;
-      if output=1 then
-      begin
-       //Create the button, if required
-       if not competitions[comp_title.Tag].Ext_judge then
-       begin
-        SetLength(buttons[cat],i+1);
-        buttons[cat,i]:=CreateSpeedButton(i*20,j,SB);
-        buttons[cat,i].Glyph:=ResultsForm.detail_results_btn.Glyph;
-        buttons[cat,i].OnClick:=ShowTally;
-       end;
-       //Create the label and increase the counter
-       SetLength(labels[cat],i+1);
-       labels[cat,i]:=CreateLabel(e+':'+S,20,i*20,SB);
-      end;
-      if output=2 then
-       WriteLn(F,'"'+e+'",'+S);
-      if output=3 then
-      begin
-       PrintLine(e+':'+S,'Arial',10,left_margin,[]);
-       if Printer.Canvas.PenPos.Y>h-bottom_margin-442 then
-       begin
-        PrintFooter;
-        Printer.NewPage;
-       end;
-      end;
-      inc(i);
-     end;
-    end;
-   inc(pos);
-   //continue until we have all our places (which could be more than what is expected)
-  until ((pos=season.m_Places_to_score+1) and (output=1))
-     or ((i=Length(panl_ID[cat]))         and (output<>1));
-  if output=3 then
-  begin
-   PrintFooter;
-   if cat<season.Num_categories-1 then Printer.NewPage;
-  end;
- end;
- if output=1 then
- begin
-  ResultsForm.ShowModal;
-  for i:=0 to ResultsForm.pages.PageCount-1 do
-   ResultsForm.pages.ActivePage.Free;
- end;
- if output=2 then CloseFile(F);
- if output=3 then Printer.EndDoc;
+ if PrintDialog1.Execute then OutputResults(3,0);
 end;
 
 {-------------------------------------------------------------------------------
@@ -2513,9 +2516,14 @@ Page has changed
 procedure TMainForm.PageHasChanged(Sender: TObject);
 begin
  btn_importphotos.Enabled:=False;
+ btn_importonlinecomp.Enabled:=False;
  if cat_pages.ActivePageIndex<season.Num_categories then
+ begin
   //We are not on the voting slip page, enable the button to import photos
   btn_importphotos.Enabled:=True;
+  //And the Import Online Competition button
+  btn_importonlinecomp.Enabled:=True;
+ end;
  //Change the graph
  DisplayActiveVoteGraph;
 end;
@@ -2646,6 +2654,14 @@ begin
 end;
 
 {-------------------------------------------------------------------------------
+Re-open file from Most Recently Used list
+-------------------------------------------------------------------------------}
+procedure TMainForm.adpMRU1Click(Sender: TObject; const FileName: string);
+begin
+ LoadSeason(FileName);
+end;
+
+{-------------------------------------------------------------------------------
 Enable/disable controls and setup main form
 -------------------------------------------------------------------------------}
 procedure TMainForm.EnableControls(controls: Integer);
@@ -2668,6 +2684,7 @@ begin
  cat_pages.Visible:=e;
  sb_editseason.Enabled:=e;
  btn_importphotos.Enabled:=e;
+ btn_importonlinecomp.Enabled:=e;
  btn_recalculate.Enabled:=e;
  sb_closecomp.Enabled:=e;
  sb_CloseSeason.Enabled:=e;
@@ -2693,6 +2710,7 @@ begin
   print_btn.Enabled:=True;       //Prints results to a printer
   btn_recalculate.Enabled:=True; //Recalculates positions
   btn_importphotos.Enabled:=True;//Import Photos via CSV
+  btn_importonlinecomp.Enabled:=True;//Import entire competition
   btn_delphotographs.Enabled:=True; //Delete Redundant Photos
   if comp_title.Tag>=0 then        //Voting Slip
    btn_votingslip.Enabled:=not competitions[comp_title.Tag].Ext_judge;
@@ -2805,7 +2823,7 @@ begin
   for j:=0 to (num_vslips div season.Num_categories)-1 do
    for cat:=0 to MainForm.season.Num_categories-1 do
     for pos:=0 to MainForm.season.m_Places_to_score-1 do
-     if edit_vslip[j,cat,pos].Text>edit_maxphotoID[cat].Text then
+     if ConvertFromID(edit_vslip[j,cat,pos].Text)>ConvertFromID(edit_maxphotoID[cat].Text) then
       edit_vslip[j,cat,pos].Text:='';
   //Now ensure that the high positions are not blank
   for j:=0 to (num_vslips div season.Num_categories)-1 do
@@ -2844,12 +2862,151 @@ Recalculate the Results for competition 'comp'
 -------------------------------------------------------------------------------}
 procedure TMainForm.RecalculateResults(comp: Integer);
 var
- cat,i,j,pos,entry,num_photos,high,fromy: Integer;
- s: String;
- p: array of Integer;
- p2: array of String;
- pos_count: array of array of array of Integer;
- photos: array of TPhotographs;
+ cat,i,j,pos,
+ entry,
+ num_photos,
+ high,fromy  : Integer;
+ s           : String;
+ p           : array of Integer;
+ p2          : array of String;
+ pos_count   : array of array of array of Integer;
+ photos      : array of TPhotographs;
+ dest,source : TRect;
+const
+ //Voting graph constants
+ OriginX     = 30; //Where the bottom left of the
+ OriginY     = 25; //graph is, e.g. (0,0)
+ TitleHeight = 25; //Margin for the title
+ IDWidth     = 100;//Margin for the IDs
+ xmulti      = 20; //Multipliers - determines the
+ ymulti      = 10; //scale of the graph
+ //Set Up the graph ------------------------------------------------------------
+ procedure SetUpVoteGraph;
+ begin
+  if not competitions[comp].Ext_judge then
+   if VSlipsPerComp(comp)>0 then
+   begin
+    vote_graph[cat].Picture.Bitmap.Width :=((VSlipsPerComp(comp)div season.Num_categories)*xmulti)
+                           +OriginX+IDWidth;
+    vote_graph[cat].Picture.Bitmap.Height:=
+               ((VSlipsPerComp(comp)div season.Num_categories)*ymulti*m_scoring[0])
+               +OriginY+TitleHeight;
+    vote_graph[cat].Width:=vote_graph[cat].Picture.Bitmap.Width;
+    vote_graph[cat].Height:=vote_graph[cat].Picture.Bitmap.Height;
+    vote_graph[cat].Canvas.Pen.Color  :=$000000;
+    vote_graph[cat].Canvas.Brush.Color:=clBtnFace;
+    vote_graph[cat].Canvas.Rectangle(0,
+                                     0,
+                                     vote_graph[cat].Width,
+                                     vote_graph[cat].Height);
+   end;
+ end;
+ //Draw a line on the graph ----------------------------------------------------
+ procedure DrawALine(entry,x,fromy,toy: Integer);
+ var
+  h: Integer;
+ begin
+  if not competitions[comp_title.Tag].Ext_judge then
+   if VSlipsPerComp(comp_title.Tag)>0 then
+   begin
+    h:=vote_graph[cat].Height;
+    vote_graph[cat].Canvas.Pen.Color:=Colour(entry);
+    vote_graph[cat].Canvas.MoveTo(((x-1)*xmulti)+OriginX,(h-(fromy*ymulti))-OriginY);
+    vote_graph[cat].Canvas.LineTo(( x   *xmulti)+OriginX,(h-(toy  *ymulti))-OriginY);
+   end;
+ end;
+//Draw the scale and legends ---------------------------------------------------
+ procedure DrawLegends;
+ var
+  w,h,i: Integer;
+  x: TSize;
+  S: String;
+  offset: array of Integer;
+ begin
+  if not competitions[comp_title.Tag].Ext_judge then
+   if VSlipsPerComp(comp_title.Tag)>0 then
+   begin
+    //Set the colour to draw with
+    vote_graph[cat].Canvas.Pen.Color  :=$000000;
+    //Draw the Y-axis
+    vote_graph[cat].Canvas.MoveTo(OriginX,vote_graph[cat].Height-OriginY);
+    vote_graph[cat].Canvas.LineTo(vote_graph[cat].Width-IDWidth,
+                                  vote_graph[cat].Height-OriginY);
+    //Draw the X-axis
+    vote_graph[cat].Canvas.MoveTo(OriginX,vote_graph[cat].Height-OriginY);
+    vote_graph[cat].Canvas.LineTo(OriginX,TitleHeight);
+    //Set the text
+    vote_graph[cat].Canvas.Brush.Style:=bsClear;
+    vote_graph[cat].Canvas.Font.Name:='Arial';
+    vote_graph[cat].Canvas.Font.Size:=8;
+    vote_graph[cat].Canvas.Font.Style:=[];
+    vote_graph[cat].Canvas.Font.Color:=$000000;
+    //X-axis text
+    vote_graph[cat].Canvas.Font.Orientation:=0;
+    vote_graph[cat].Canvas.TextOut(OriginX,
+                                   (vote_graph[cat].Height-OriginY)+4,
+                                   'Voting Slips');
+    //Y-axis text
+    vote_graph[cat].Canvas.Font.Orientation:=900;
+    S:='Score';
+    w:=vote_graph[cat].Canvas.TextWidth(S)div 2;
+    vote_graph[cat].Canvas.TextOut(OriginX-w,
+                                   vote_graph[cat].Height-OriginY,S);
+    //IDs
+    vote_graph[cat].Canvas.Font.Orientation:=0;
+    SetLength(offset,
+           (VSlipsPerComp(comp_title.Tag)div season.Num_categories)*m_scoring[0]);
+    //The offset array is used when multiple photos have the same final score
+    for i:=0 to Length(offset)-1 do offset[i]:=0;
+    high:=0; //Used to work out the highest score
+    //Calculate the size of a letter
+    x:=vote_graph[cat].Canvas.TextExtent('XX');
+    w:=x.cx+4;
+    h:=x.cy div 2;
+    for i:=0 to Length(photographs)-1 do
+     if  (photographs[i].Competition=comp_title.Tag)
+     and (photographs[i].Category=cat)
+     and (not photographs[i].Ignore) then
+     begin
+      vote_graph[cat].Canvas.Font.Color:=Colour(ConvertFromID(photographs[i].ID)-1);
+      vote_graph[cat].Canvas.TextOut(
+                (vote_graph[cat].Width-IDWidth)+4+(offset[photographs[i].Score]*w),
+                vote_graph[cat].Height-((photographs[i].Score*ymulti)+OriginY+h),
+                photographs[i].ID);
+      inc(offset[photographs[i].Score]);
+      if photographs[i].Score>high then high:=photographs[i].Score;
+     end;
+    //Shift the entire graphic up
+    source.Left:=0;
+    source.Top:=vote_graph[cat].Height-((high*ymulti)+OriginY+h);
+    source.Width:=vote_graph[cat].Width;
+    source.Height:=(high*ymulti)+OriginY+h;
+    dest.Left:=0;
+    dest.Top:=TitleHeight;
+    dest.Height:=source.Height;
+    dest.Width:=source.Width;
+    vote_graph[cat].Canvas.CopyRect(dest,vote_graph[cat].Canvas,source);
+    //Resize the image
+    vote_graph[cat].Picture.Bitmap.Height:=(high*ymulti)
+                                          +OriginY+TitleHeight;
+    vote_graph[cat].Height:=vote_graph[cat].Picture.Bitmap.Height;
+    //Title
+    S:=competitions[comp_title.Tag].Title+' '+categories[cat]+' Category';
+    vote_graph[cat].Canvas.Font.Style:=[fsBold];
+    vote_graph[cat].Canvas.Font.Color:=$FF0000;
+    i:=14;
+    repeat
+     vote_graph[cat].Canvas.Font.Size:=i;
+     x:=vote_graph[cat].Canvas.TextExtent(S);
+     w:=x.cx;
+     h:=x.cy;
+     dec(i);
+    until w<=vote_graph[cat].Width;
+    vote_graph[cat].Canvas.TextOut((vote_graph[cat].Width-w)div 2,
+                                   TitleHeight-h,S);
+   end;
+ end;
+//Main procedure starts here ---------------------------------------------------
 begin
  //Validate the voting slips, if the current competition is open
  if not competitions[comp].Ext_judge then
@@ -2884,7 +3041,7 @@ begin
   if not competitions[comp].Ext_judge then
   begin
    //Setup the graph
-   if comp=comp_title.Tag then SetUpVoteGraph(cat,comp);
+   if comp=comp_title.Tag then SetUpVoteGraph;
    high:=0; //To keep track of number of voting slips used
    for i:=0 to Length(v_slips)-1 do
     if v_slips[i].Used then
@@ -2905,19 +3062,23 @@ begin
          inc(j);
         until (photos[j].ID=v_slips[i].Places[pos])
            or (j=num_photos-1);
-        photos[j].Voting:=photos[j].Voting+IntToStr(pos+1);
-        if comp=comp_title.Tag then fromy:=photos[j].Score;
-        inc(photos[j].Score,m_scoring[pos]);
-        if comp=comp_title.Tag then
-         DrawALine(cat,j,high,fromy,photos[j].Score);
+        if not photos[j].Ignore then
+        begin
+         photos[j].Voting:=photos[j].Voting+IntToStr(pos+1);
+         if comp=comp_title.Tag then fromy:=photos[j].Score;
+         inc(photos[j].Score,m_scoring[pos]);
+         if comp=comp_title.Tag then
+          DrawALine(j,high,fromy,photos[j].Score);
+        end;
        end;
       end;
       for entry:=0 to num_photos-1 do
-       if Length(photos[entry].Voting)<high then
+       if  (Length(photos[entry].Voting)<high)
+       and (not photos[entry].Ignore) then
        begin
         photos[entry].Voting:=photos[entry].Voting+'0';
         if comp=comp_title.Tag then
-         DrawALine(cat,entry,high,photos[entry].Score,photos[entry].Score);
+         DrawALine(entry,high,photos[entry].Score,photos[entry].Score);
        end;
      end;
   end;
@@ -2936,42 +3097,46 @@ begin
   ArraySort(p);
   //Populate the Position field with 'NP', unless externally voted for
   for i:=0 to num_photos-1 do
-   if  (competitions[comp].Ext_judge)
-   and (StrToIntDef(photos[i].Voting,0)<>0) then
-   begin
-    photos[i].Position:=photos[i].Voting;
-    if StrToInt(photos[i].Voting)>high then
-     high:=StrToInt(photos[i].Voting);
-   end
-   else
-    photos[i].Position:='NP';
+//   if not photos[i].Ignore then
+    if  (competitions[comp].Ext_judge)
+    and (StrToIntDef(photos[i].Voting,0)<>0) then
+    begin
+     photos[i].Position:=photos[i].Voting;
+     if StrToInt(photos[i].Voting)>high then
+      high:=StrToInt(photos[i].Voting);
+    end
+    else
+     photos[i].Position:='NP';
   //Now populate the Position field with the place
   for i:=0 to Length(p)-1 do
    for j:=0 to num_photos-1 do
-   begin
-    s:=photos[j].Position;
-    if photos[j].Score=p[i] then
-     if s='NP' then
-      photos[j].Position:=IntToStr(i+1+high)
-     else
-      if Copy(s,Length(s),1)<>'=' then
-       photos[j].Position:=photos[j].Position+'=';
-   end;
-  if not competitions[comp].Ext_judge then
+//    if not photos[j].Ignore then
+    begin
+     s:=photos[j].Position;
+     if photos[j].Score=p[i] then
+      if s='NP' then
+       photos[j].Position:=IntToStr(i+1+high)
+      else
+       if (Copy(s,Length(s),1)<>'=') then
+        if not((competitions[comp].Ext_judge) and (photos[j].Voting<>'')) then
+         photos[j].Position:=photos[j].Position+'=';
+    end;
+  if (not competitions[comp].Ext_judge) and (season.SplitEqual) then
   begin
-   //Seperate the equal places
+   //Separate the equal places
    SetLength(p2,num_photos);
    for i:=0 to num_photos-1 do
-   begin
-    for pos:=0 to season.m_places_to_score-1 do
-     photos[i].Tally:=photos[i].Tally+IntToPadStr(pos_count[cat,i,pos],'0',2);
-    s:=photos[i].Position;
-    photos[i].Position:='NP';
-    if Copy(s,Length(s),1)='=' then s:=Copy(s,1,Length(s)-1);
-    entry:=StrToInt(s);
-    photos[i].Tally:=IntToPadStr(100-entry,'0',3)+photos[i].Tally;
-    p2[i]:=photos[i].Tally;
-   end;
+//   if not photos[i].Ignore then
+    begin
+     for pos:=0 to season.m_places_to_score-1 do
+      photos[i].Tally:=photos[i].Tally+IntToPadStr(pos_count[cat,i,pos],'0',2);
+     s:=photos[i].Position;
+     photos[i].Position:='NP';
+     if Copy(s,Length(s),1)='=' then s:=Copy(s,1,Length(s)-1);
+     entry:=StrToIntDef(s,0);
+     photos[i].Tally:=IntToPadStr(100-entry,'0',3)+photos[i].Tally;
+     p2[i]:=photos[i].Tally;
+    end;
    ArraySort(p2);
    for i:=0 to Length(p2)-1 do
     for j:=0 to num_photos-1 do
@@ -2990,13 +3155,22 @@ begin
     if  (photographs[j].Competition=comp)
     and (photographs[j].Category=cat)
     and (photographs[j].ID=photos[i].ID) then
+    begin
      photographs[j]:=photos[i];
+     if photographs[j].Ignore then
+     begin
+      photographs[j].Score:=0;
+      photographs[j].Position:='';
+      photographs[j].Tally:='';
+      photographs[j].Voting:='';
+     end;
+    end;
   //Populate the controls
   if comp=comp_title.Tag then
    for pos:=0 to Length(panl_ID[cat])-1 do
     FillInPhotoControl(cat,pos+1,panl_ID[cat,pos].Tag);
   //Draw the legend and scale on the graph
-  if comp=comp_title.Tag then DrawLegends(cat);
+  if comp=comp_title.Tag then DrawLegends;//(cat);
  end;
  if  (comp_title.Tag=comp)
  and (not competitions[comp].Ext_judge) then
@@ -3116,10 +3290,7 @@ Open the ESCC website in the clients web browser
 -------------------------------------------------------------------------------}
 procedure TMainForm.WebLinkBtnClick(Sender: TObject);
 begin
- ShellExecute(Application.Handle,
-              PChar('open'),
-              PChar('http://www.eastsutherlandcc.org.uk'),
-              PChar(0),nil,1);
+ OpenURL(PChar('http://www.eastsutherlandcc.org.uk')); { *Converted from ShellExecute* }
 end;
 
 {-------------------------------------------------------------------------------
@@ -3150,18 +3321,81 @@ var
 begin
  Result:=0;
  for i:=0 to Length(photographs)-1 do
-  if photographs[i].Author=member then inc(Result);
+  if  (photographs[i].Author=member)
+  and (not photographs[i].Ignore) then inc(Result);
 end;
 
 {-------------------------------------------------------------------------------
 Find author index by name
 -------------------------------------------------------------------------------}
 function TMainForm.FindAuthor(S: String): Integer;
-var i: Integer;
+ function ForenameFuzzyMatch(fname,fnames: String): Boolean;
+     const names: array[0..29] of String  = (
+     '|Alan|Al|Allan|',
+     '|Alexander|Sandy|Sander|Xander|Alex|Ali|',
+     '|Alexandra|Alex|Ali|',
+     '|Andrew|Andy|Drew|',
+     '|Ann|Anne|Annabel|Annabelle|',
+     '|Ashley|Ash|',
+     '|Contessa|Tessa|',
+     '|David|Dave|Davie|',
+     '|Deborah|Deb|Debs|Debbie|Debra|',
+     '|Elizabeth|Beth|Liz|Lizzie|Lizzy|',
+     '|Emma|Em|',
+     '|Gerald|Ger|Gel|Gez|Gerry|Gerard|Gezza|',
+     '|Graeme|Graham|',
+     '|Jennifer|Jen|Jenn|Jenny|',
+     '|John|Jon|Johnathon|Jonathon',
+     '|Louise|Lou|',
+     '|Malcolm|Malc|',
+     '|Margaret|Marge|Maggy|Maggie|Mag|Mags|Peg|Peggy|',
+     '|Nicolas|Nic|Nick|Nik|Nicky|',
+     '|Nicola|Nic|Nick|Nik|Nicky|',
+     '|Patrick|Pat|Paddy|',
+     '|Peter|Pete|',
+     '|Rebecca|Bec|Becca|Beccy|Becky|Beck|Becka|Rebeccah|',
+     '|Richard|Rich|Dick|Ricky|Dicky|',
+     '|Ronnie|Ronald|Ron|',
+     '|Sally|Sal|',
+     '|Sandra|Sandy|',
+     '|Sean|Shawn|Shaun|',
+     '|Stanley|Stan|',
+     '|William|Bill|Billy|Will|Willy|Wm|');
+ var
+  i: Integer;
+ begin
+  Result:=fname=fnames; //Will return true if a direct match, and not listed above
+  for i:=0 to Length(names)-1 do
+  begin
+   if  (Pos('|'+fname+'|',names[i],1)>0)
+   and (Pos('|'+fnames+'|',names[i],1)>0) then Result:=True;
+  end;
+ end;
+var
+ i: Integer;
+ fname,sname,
+ fnames,snames: String;
 begin
  Result:=0;
  for i:=0 to Length(MembersList)-1 do
   if MembersList[i]=S then Result:=i;
+ if Result=0 then //Try and find a match with alternate spellings
+ begin
+  //Split search name into Surname and Forename
+  fname:=LeftStr(S,Pos(' ',S,1)-1);
+  sname:=Copy(S,Pos(' ',S,1)+1);
+  for i:=0 to Length(MembersList)-1 do
+  begin
+   //Split member name into Surname and Forename
+   fnames:=LeftStr(MembersList[i],Pos(' ',MembersList[i],1)-1);
+   snames:=Copy(MembersList[i],Pos(' ',MembersList[i],1)+1);
+   if  (ForenameFuzzyMatch(fname,fnames))
+   AND (((Copy(sname,1,2)='Mc')  AND (Copy(snames,1,3)='Mac'))
+   OR   ((Copy(sname,1,3)='Mac') AND (Copy(snames,1,2)='Mc'))
+   OR   ((Copy(sname,1,1)='W')   AND (Copy(snames,1,2)='Wh'))
+   OR   ((Copy(sname,1,2)='Wh')  AND (Copy(snames,1,1)='W'))) then Result:=i
+  end;
+ end;
 end;
 
 {-------------------------------------------------------------------------------
@@ -3213,6 +3447,7 @@ procedure TMainForm.DeleteCompetitionPhotographs(comp: Integer);
 var
  i: Integer;
 begin
+ //This only deletes the entries in the arrays, not the controls
  //Go through the entire list of photos
  for i:=0 to Length(photographs)-1 do
   if photographs[i].Competition=comp then
@@ -3357,13 +3592,28 @@ begin
   panl_ID[cat,y-1].Caption      :=photographs[x].ID;
   edit_title[cat,y-1].Text      :=photographs[x].Title;
   cbox_author[cat,y-1].ItemIndex:=photographs[x].Author;
-  edit_score[cat,y-1].Text      :=IntToStr(photographs[x].Score);
-  if competitions[comp_title.Tag].Ext_judge then
-   edit_voting[cat,y-1].Text     :=photographs[x].Voting
+  if not photographs[x].Ignore then
+  begin
+   edit_score[cat,y-1].Text      :=IntToStr(photographs[x].Score);
+   if competitions[comp_title.Tag].Ext_judge then
+    edit_voting[cat,y-1].Text     :=photographs[x].Voting
+   else
+    edit_voting[cat,y-1].Text     :=FormatTally(photographs[x].Tally);
+   edit_place[cat,y-1].Text      :=photographs[x].Position;
+  end
   else
-   edit_voting[cat,y-1].Text     :=FormatTally(photographs[x].Tally);
-  edit_place[cat,y-1].Text      :=photographs[x].Position;
+  begin
+   edit_score[cat,y-1].Text      :='';
+   edit_voting[cat,y-1].Text     :='';
+   edit_place[cat,y-1].Text      :='';
+  end;
+  //Tag the control to tie them to the index in the photographs array
   panl_ID[cat,y-1].Tag          :=x;
+  edit_title[cat,y-1].Tag       :=x;
+  cbox_author[cat,y-1].Tag      :=x;
+  edit_score[cat,y-1].Tag       :=x;
+  edit_voting[cat,y-1].Tag      :=x;
+  edit_place[cat,y-1].Tag       :=x;
   //Mark the empty title and author entries
   MarkEmptyPhotos(cat,y);
  end;
@@ -3391,122 +3641,6 @@ begin
 end;
 
 {-------------------------------------------------------------------------------
-Draw a line on the graph
--------------------------------------------------------------------------------}
-procedure TMainForm.DrawALine(cat,entry,x,fromy,toy: Integer);
-var
- h: Integer;
-begin
- if not competitions[comp_title.Tag].Ext_judge then
-  if VSlipsPerComp(comp_title.Tag)>0 then
-  begin
-   h:=vote_graph[cat].Height;
-   vote_graph[cat].Canvas.Pen.Color:=Colour(entry);
-   vote_graph[cat].Canvas.MoveTo(((x-1)*xmulti)+OriginX,(h-(fromy*ymulti))-OriginY);
-   vote_graph[cat].Canvas.LineTo(( x   *xmulti)+OriginX,(h-(toy  *ymulti))-OriginY);
-  end;
-end;
-
-{-------------------------------------------------------------------------------
-Set Up the graph
--------------------------------------------------------------------------------}
-procedure TMainForm.SetUpVoteGraph(cat,comp: Integer);
-begin
- if not competitions[comp].Ext_judge then
-  if VSlipsPerComp(comp)>0 then
-  begin
-   vote_graph[cat].Picture.Bitmap.Width :=((VSlipsPerComp(comp)div season.Num_categories)*xmulti)
-                          +OriginX+IDWidth;
-   vote_graph[cat].Picture.Bitmap.Height:=
-              ((VSlipsPerComp(comp)div season.Num_categories)*ymulti*m_scoring[0])
-              +OriginY+TitleHeight;
-   vote_graph[cat].Width:=vote_graph[cat].Picture.Bitmap.Width;
-   vote_graph[cat].Height:=vote_graph[cat].Picture.Bitmap.Height;
-   vote_graph[cat].Canvas.Pen.Color  :=$000000;
-   vote_graph[cat].Canvas.Brush.Color:=clBtnFace;
-   vote_graph[cat].Canvas.Rectangle(0,
-                                    0,
-                                    vote_graph[cat].Width,
-                                    vote_graph[cat].Height);
-  end;
-end;
-
-{-------------------------------------------------------------------------------
-Draw the scale and legends
--------------------------------------------------------------------------------}
-procedure TMainForm.DrawLegends(cat: Integer);
-var
- w,h,i: Integer;
- x: TSize;
- S: String;
- offset: array of Integer;
-begin
- if not competitions[comp_title.Tag].Ext_judge then
-  if VSlipsPerComp(comp_title.Tag)>0 then
-  begin
-   //Set the colour to draw with
-   vote_graph[cat].Canvas.Pen.Color  :=$000000;
-   //Draw the Y-axis
-   vote_graph[cat].Canvas.MoveTo(OriginX,vote_graph[cat].Height-OriginY);
-   vote_graph[cat].Canvas.LineTo(vote_graph[cat].Width-IDWidth,
-                                 vote_graph[cat].Height-OriginY);
-   //Draw the X-axis
-   vote_graph[cat].Canvas.MoveTo(OriginX,vote_graph[cat].Height-OriginY);
-   vote_graph[cat].Canvas.LineTo(OriginX,TitleHeight);
-   //Set the text
-   vote_graph[cat].Canvas.Brush.Style:=bsClear;
-   vote_graph[cat].Canvas.Font.Name:='Arial';
-   vote_graph[cat].Canvas.Font.Size:=8;
-   vote_graph[cat].Canvas.Font.Style:=[];
-   vote_graph[cat].Canvas.Font.Color:=$000000;
-   //X-axis text
-   vote_graph[cat].Canvas.Font.Orientation:=0;
-   vote_graph[cat].Canvas.TextOut(OriginX,
-                                  (vote_graph[cat].Height-OriginY)+4,
-                                  'Voting Slips');
-   //Y-axis text
-   vote_graph[cat].Canvas.Font.Orientation:=900;
-   S:='Score';
-   w:=vote_graph[cat].Canvas.TextWidth(S)div 2;
-   vote_graph[cat].Canvas.TextOut(OriginX-w,
-                                  vote_graph[cat].Height-OriginY,S);
-   //IDs
-   vote_graph[cat].Canvas.Font.Orientation:=0;
-   SetLength(offset,
-          (VSlipsPerComp(comp_title.Tag)div season.Num_categories)*m_scoring[0]);
-   for i:=0 to Length(offset)-1 do offset[i]:=0;
-   for i:=0 to Length(photographs)-1 do
-    if  (photographs[i].Competition=comp_title.Tag)
-    and (photographs[i].Category=cat) then
-    begin
-     x:=vote_graph[cat].Canvas.TextExtent('X');
-     w:=x.cx+4;
-     h:=x.cy div 2;
-     vote_graph[cat].Canvas.Font.Color:=Colour(ConvertFromID(photographs[i].ID)-1);
-     vote_graph[cat].Canvas.TextOut(
-               (vote_graph[cat].Width-IDWidth)+4+(offset[photographs[i].Score]*w),
-               vote_graph[cat].Height-((photographs[i].Score*ymulti)+OriginY+h),
-               photographs[i].ID);
-     inc(offset[photographs[i].Score]);
-    end;
-   //Title
-   S:=competitions[comp_title.Tag].Title+' '+categories[cat]+' Category';
-   vote_graph[cat].Canvas.Font.Style:=[fsBold];
-   vote_graph[cat].Canvas.Font.Color:=$FF0000;
-   i:=14;
-   repeat
-    vote_graph[cat].Canvas.Font.Size:=i;
-    x:=vote_graph[cat].Canvas.TextExtent(S);
-    w:=x.cx;
-    h:=x.cy;
-    dec(i);
-   until w<=vote_graph[cat].Width;
-   vote_graph[cat].Canvas.TextOut((vote_graph[cat].Width-w)div 2,
-                                  TitleHeight-h,S);
-  end;
-end;
-
-{-------------------------------------------------------------------------------
 Print some text to the printer, and move the cursor down
 -------------------------------------------------------------------------------}
 procedure TMainForm.PrintLine(S,font: String;size,x: Integer;style: TFontStyles);
@@ -3524,8 +3658,9 @@ begin
  tw:=Printer.Canvas.TextWidth(S);
  while tw>Printer.PageWidth-left_margin-right_margin do
  begin
-  S2:=Copy(S,Length(S)-1,1)+S2;
+  S2:=Copy(S,Length(S),1)+S2;
   S:=Copy(S,1,Length(S)-1);
+  tw:=Printer.Canvas.TextWidth(S);
  end;
  if centre then x:=(Printer.PageWidth-Printer.Canvas.TextWidth(S))div 2;
  Printer.Canvas.TextOut(x,Printer.Canvas.PenPos.Y,S);
@@ -3535,12 +3670,33 @@ begin
  begin
   tw:=Printer.Canvas.TextWidth(S2);
   while tw>Printer.PageWidth-left_margin-right_margin do
+  begin
    S2:=Copy(S,1,Length(S)-1);
+   tw:=Printer.Canvas.TextWidth(S2);
+  end;
   if centre then x:=(Printer.PageWidth-Printer.Canvas.TextWidth(S2))div 2;
   Printer.Canvas.TextOut(x,Printer.Canvas.PenPos.Y,S2);
   Printer.Canvas.MoveTo(0,
              Round(Printer.Canvas.TextHeight(S2)*1.5)+Printer.Canvas.PenPos.Y);
  end;
+end;
+
+{-------------------------------------------------------------------------------
+Prints the header to a page
+-------------------------------------------------------------------------------}
+procedure TMainForm.PrintHeader(title: String;cat: Integer);
+begin
+ Printer.Canvas.Draw(left_margin,top_margin,ESCCLogo.Picture.Graphic);
+ Printer.Canvas.MoveTo(left_margin,top_margin);
+ Printer.Canvas.Font.Color:=clBlue;
+ PrintLine(season.Title+' season','Arial',24,-1,[fsBold]);
+ PrintLine(title+' Results','Arial',20,-1,[fsBold]);
+ PrintLine(categories[cat]+' Category','Arial',16,-1,[fsBold]);
+ Printer.Canvas.Font.Color:=clBlack;
+ Printer.Canvas.Pen.Color:=clRed;
+ Printer.Canvas.MoveTo(left_margin,Printer.Canvas.PenPos.Y);
+ Printer.Canvas.LineTo(Printer.PageWidth-right_margin,Printer.Canvas.PenPos.Y);
+ Printer.Canvas.MoveTo(left_margin,Printer.Canvas.PenPos.Y+50);
 end;
 
 {-------------------------------------------------------------------------------
@@ -3553,10 +3709,528 @@ begin
  Printer.Canvas.LineTo(Printer.PageWidth-right_margin,Printer.PageHeight-bottom_margin-342);
  PrintLine('ESCC Competitions version '+AppVersion+' written by Gerald J Holdsworth',
            'Arial',8,-1,[fsBold,fsItalic]);
- PrintLine('©2017 Gerald J Holdsworth and East Sutherland Camera Club',
+ PrintLine('Â©2017 Gerald J Holdsworth and East Sutherland Camera Club',
            'Arial',8,-1,[fsBold,fsItalic]);
  PrintLine('http://www.eastsutherlandcc.org.uk',
            'Arial',8,-1,[fsBold,fsItalic]);
+end;
+
+{-------------------------------------------------------------------------------
+Output Results
+-------------------------------------------------------------------------------}
+procedure TMainForm.OutputResults(output,results: Integer);
+//Output
+// 1: Display on form
+// 2: Save to CSV file
+// 3: Print
+//Results
+// 0: Monthly
+// 1: PoTY
+type
+ Tmem_pos = Record
+  Pos: Integer;
+  equal: Boolean;
+  Name: String;
+  Score: Integer;
+  Tally: String;
+ end;
+var
+ photo,cat,comp,author,place,i,j,pos,h,k: Integer;
+ S,P,e,title: String;
+ page: TTabSheet;
+ SB: TScrollBox;
+ pm: array of Integer;
+ ps: array of String;
+ c: array of Boolean;
+ equal,test: Boolean;
+ labels: array of array of TLabel;
+ buttons: array of array of TSpeedButton;
+ mem_pos: array of array of Tmem_pos;
+ F: TextFile;
+begin
+ SB:=nil;
+ h:=0;
+ //Set up detail selection form
+ //Enable/Disable controls
+ DetailSelectionForm.cb_ID.Enabled      :=results=0;
+ DetailSelectionForm.cb_Title.Enabled   :=results=0;
+ DetailSelectionForm.cb_Author.Enabled  :=results=0;
+ DetailSelectionForm.cb_Position.Enabled:=results=0;
+ DetailSelectionForm.cb_Tally.Enabled   :=True;
+ DetailSelectionForm.rg_SortBy.Enabled  :=results=0;
+ if (results=0) and (output>1) then
+ begin
+  //Printing or Saving monthly results
+  DetailSelectionForm.cb_ID.Checked      :=def_ID;
+  DetailSelectionForm.cb_Title.Checked   :=def_Title;
+  DetailSelectionForm.cb_Author.Checked  :=def_author;
+  DetailSelectionForm.cb_Position.Checked:=def_position;
+  DetailSelectionForm.cb_Tally.Checked   :=def_tally_monthly;
+  DetailSelectionForm.rg_SortBy.ItemIndex:=def_sortby;
+ end;
+ if (results=0) and (output=1) then
+ begin
+  //Display monthly results - all should be true
+  DetailSelectionForm.cb_ID.Checked      :=True;
+  DetailSelectionForm.cb_Title.Checked   :=True;
+  DetailSelectionForm.cb_Author.Checked  :=True;
+  DetailSelectionForm.cb_Position.Checked:=True;
+  DetailSelectionForm.cb_Tally.Checked   :=True;
+  DetailSelectionForm.rg_SortBy.ItemIndex:=0;
+ end;
+ DetailSelectionForm.up_Top.Enabled     :=(results=1);
+ //                                      OR (DetailSelectionForm.cb_Position.Checked);
+ DetailSelectionForm.ed_Top.Enabled     :=(results=1);
+ //                                      OR (DetailSelectionForm.cb_Position.Checked);
+ if (results=1) and (output>1) then //Print/Save POY results
+ begin
+  DetailSelectionForm.cb_Tally.Checked   :=def_tally_annual;
+  DetailSelectionForm.up_Top.Position    :=def_topPOY;
+ end;
+ if (results=1) and (output=1) then //Display POY results
+ begin
+  DetailSelectionForm.cb_Tally.Checked   :=True;
+  DetailSelectionForm.up_Top.Position    :=99;
+ end;
+ //Show Detail Selection Form
+ if output>1 then
+  DetailSelectionForm.ShowModal;
+ if results=0 then //results=0 is monthly results
+  RecalculateResults(comp_title.Tag);
+ if results=1 then //results=1 is POY results
+ begin
+  //Blank the scores
+  for author:=0 to Length(members)-1 do
+   for cat:=0 to season.Num_categories-1 do
+   begin
+    members[author].Score[cat]:=0;
+    members[author].Tally[cat]:=IntToPadStr(0,'0',season.a_Places_to_score*2);
+   end;
+  //Recalculate the results for all the competitions
+  for i:=0 to season.Num_competitions-1 do
+   RecalculateResults(i);
+  //Go through each photograph and collate the position tallies.
+  ProgressBar1.Max:=Length(photographs)-1;
+  for photo:=0 to Length(photographs)-1 do
+  if not photographs[photo].Ignore then
+   begin
+    author:=photographs[photo].Author; //Get the author
+    comp:=photographs[photo].Competition;//Get the competition
+    cat:=photographs[photo].Category;  //Get the category
+    S:=photographs[photo].Position;    //Get the position
+    if Copy(S,Length(S),1)='=' then
+      S:=Copy(S,1,Length(S)-1);        //Remove the '='
+    if S<>'' then                      //If photo was placed
+    begin
+     place:=StrToIntDef(S,1)-1;        //Convert to an integer
+     if ((photographs[photo].Score>0)       //Only take note if score is >0
+     and (not competitions[comp].Ext_Judge))//Or judged externally
+     or (competitions[comp].Ext_judge) then
+      if (place<season.a_Places_to_score) then //and within the places to score
+      begin
+       //Get the number of times placed at this position
+       i:=StrToInt(Copy(members[author].Tally[cat],(place*2)+1,2));
+       //Increase it
+       inc(i);
+       //Then put it back
+       members[author].Tally[cat]:=Copy(members[author].Tally[cat],0,place*2)
+                                  +IntToPadStr(i,'0',2)
+                                  +Copy(members[author].Tally[cat],((place+1)*2)+1);
+      end;
+    end;
+    ProgressBar1.Position:=photo;
+    ProgressBar1.Update;
+   end;
+  //Go through each author and add up the scores from the tallies
+  for author:=0 to Length(members)-1 do
+   for cat:=0 to season.Num_categories-1 do
+   begin
+    //Reset the counter to zero
+    photo:=0;
+    //Go through the tally from 1 to season.a_Places_to_score
+    for place:=1 to season.a_Places_to_score do
+    begin
+     //If the counter is <season.ScoreEntries then add in the score for that place
+     if photo<season.ScoreEntries then
+     begin
+      //Get the number of times in that position
+      S:=Copy(members[author].Tally[cat],((place-1)*2)+1,2);
+      pos:=StrToIntDef(S,0); //As an integer
+      if pos+photo>season.ScoreEntries then //Only count if it is under the threshold
+       i:=season.ScoreEntries-photo         //Otherwise just count upto the threshold
+      else i:=pos;
+      //Add it to the score (no_times_at_pos * score_for_pos)
+      inc(members[author].Score[cat],a_scoring[place-1]*i);
+      //Increase the counter
+      inc(photo,pos); //This is NOT the total number of submissions
+     end;
+    end;
+   end;
+ end;
+ //Save the results
+ SaveSeasonFile;
+ //Set up the form/file/printer
+ title:='';
+ if results=0 then
+  title:=competitions[comp_title.Tag].Title+' Competition';
+ if results=1 then
+  title:='Photographers of the Year';
+ if output=1 then
+ begin
+  //First clear the form, should it already contain data
+  For i:=0 to ResultsForm.pages.PageCount-1 do
+   ResultsForm.pages.ActivePage.Free;
+  //Then fill in the headers
+  ResultsForm.Caption:=title+' Results';
+  if results=0 then
+   ResultsForm.header.Caption:=comp_title.Text+
+                          ' ('+MonthList[competitions[comp_title.Tag].Month+1]+')';
+  if results=1 then
+   ResultsForm.header.Caption:=title;
+  //Make room for the controls
+  SetLength(labels,season.Num_categories);
+  if results=0 then
+   SetLength(buttons,season.Num_categories);
+ end;
+ if output=2 then
+ begin
+  //Create the file
+  AssignFile(F,csv_Save.FileName);
+  ReWrite(F);
+ end;
+ if output=3 then
+ begin
+  //Setup the printer
+  Printer.Title:='ESCC Competitions '+title+' Results';
+  Printer.Copies:=1;
+  h:=Printer.PageHeight;
+  Printer.BeginDoc;
+ end;
+ //This is a local copy of the members array, so we can re-sort it
+ //And it's an array per category
+ if results=1 then
+  SetLength(mem_pos,season.Num_categories);
+ ProgressBar1.Max:=season.Num_categories*100;
+ ProgressBar1.Position:=0;
+ ProgressBar1.Update;
+ //Set up the form/file
+ for cat:=0 to season.Num_categories-1 do
+ begin
+  ProgressBar1.Position:=cat*100;
+  ProgressBar1.Update;
+  if output=1 then //Display in a form
+  begin
+   //Create the page and scroll box
+   page:=CreatePage(ResultsForm.pages,categories[cat]);
+   SB:=CreateScrollBox(page);
+   if results=1 then SetLength(labels[cat],length(members));
+  end;
+  if output=2 then //Save to a file
+  begin
+   if results=0 then
+   begin
+    //Write out the category name, and column headers
+    WriteLn(F,'"'+categories[cat]+' Category"');
+    S:='';
+    if DetailSelectionForm.cb_Position.Checked then
+     S:=S+'"Position",';
+    if DetailSelectionForm.cb_Title.Checked then
+     S:=S+'"Photo Title",';
+    if DetailSelectionForm.cb_Author.Checked then
+     S:=S+'"Photo Author",';
+    if DetailSelectionForm.cb_ID.Checked then
+     S:=S+'"Photo ID",';
+    S:=S+'"Score"';
+    if DetailSelectionForm.cb_Tally.Checked then
+     if not competitions[comp_title.Tag].Ext_judge then
+      for i:=0 to season.m_Places_to_score-1 do
+       S:=S+',"'+IntToPos(i+1)+'s"';
+   end;
+   if results=1 then
+   begin
+    WriteLn(F,'"'+categories[cat]+' Category"');
+    S:='"Position","Photographer","Score"';
+    if DetailSelectionForm.cb_Tally.Checked then
+     for i:=0 to season.a_Places_to_score-1 do
+      S:=S+',"'+IntToPos(i+1)+'s"';
+   end;
+   WriteLn(F,S);
+  end;
+  //Print the header for each category
+  if output=3 then
+   PrintHeader(title,cat);
+  //Sort the photographs into title order, if required
+  if (results=0) and (DetailSelectionForm.rg_SortBy.ItemIndex=1) then
+  begin
+   //Clear the array
+   SetLength(ps,0);
+   for k:=0 to Length(photographs)-1 do
+    //Find the relevant photographs
+    if  (photographs[k].Competition=comp_title.Tag)
+    and (photographs[k].Category=cat)
+    and (not photographs[k].Ignore) then
+    begin
+     //and add them to the array
+     SetLength(ps,Length(ps)+1);
+     ps[Length(ps)-1]:=photographs[k].Title;
+    end;
+    //Then sort them into order
+   if Length(ps)>0 then ArraySortA(ps);
+  end;
+  if results=1 then //Sort the members into position order, for POY results
+  begin
+   SetLength(mem_pos[cat],Length(members));
+   //set up array for sorting
+   SetLength(pm,Length(members));
+   //Set up array for checking if sorted
+   SetLength(c,Length(members));
+   for i:=1 to Length(members)-1 do
+   begin
+    //copy the scores
+    pm[i-1]:=members[i].Score[cat];
+    //and reset the checks
+    c[i-1]:=false;
+   end;
+   //Sort the scores
+   ArraySort(pm);
+   //and update the placings in the local members array
+   place:=0;
+   for author:=0 to Length(pm)-1 do
+    for i:=1 to Length(members)-1 do
+     if  (pm[author]=members[i].Score[cat])
+     and (not c[i-1])
+     and (members[i].Score[cat]>0) then
+     begin
+      mem_pos[cat,place].Pos:=author+1;
+      mem_pos[cat,place].Name:=MembersList[i];
+      mem_pos[cat,place].Score:=members[i].Score[cat];
+      mem_pos[cat,place].Tally:=IntToPadStr(100-author,'0',3)+members[i].Tally[cat];
+      c[i-1]:=true;
+      inc(place);
+     end;
+   //Split the equal places
+   SetLength(ps,Length(mem_pos[cat]));
+   //And reset the checks
+   SetLength(c,Length(mem_pos[cat]));
+   for i:=0 to Length(ps)-1 do
+   begin
+    ps[i]:=mem_pos[cat,i].Tally;
+    c[i]:=false;
+   end;
+   ArraySort(ps);
+   for place:=0 to Length(ps)-1 do
+   begin
+    equal:=false;
+    for author:=0 to Length(mem_pos[cat])-1 do
+     if  (ps[place]=mem_pos[cat,author].Tally)
+     and (not c[author]) then
+     begin
+      mem_pos[cat,author].Pos:=place+1;
+      mem_pos[cat,author].equal:=equal;
+      //This marks them as equal placed, plus the one before
+      if (equal) and (author>0) then
+       mem_pos[cat,author-1].equal:=equal;
+      equal:=True;
+      c[author]:=True;
+     end;
+   end;
+  end;
+  //Output the results
+  i:=0; //Control number
+  //position/author number
+  pos:=1;
+  if results=0 then
+   case DetailSelectionForm.rg_SortBy.ItemIndex of
+    0,2: pos:=0;
+   end;
+  place:=0;
+  if results=0 then place:=Length(photographs)-1;
+  if results=1 then
+   if DetailSelectionForm.up_Top.Position>Length(mem_pos[cat]) then
+    place:=Length(mem_pos[cat])-1
+   else
+    place:=DetailSelectionForm.up_Top.Position-1;
+  repeat
+   //We'll go through all the photos and find those relevant
+   for j:=0 to place do
+   begin
+    test:=false;
+    if results=0 then
+     test:=(photographs[j].Competition=comp_title.Tag) and (photographs[j].Category=cat);
+    if results=1 then
+     test:=(mem_pos[cat,j].Pos=pos) and (mem_pos[cat,j].Score>0);
+    if test then
+    begin
+     P:='100';
+     if (results=0) and (DetailSelectionForm.cb_Position.Checked) then
+     begin
+      //then pick out those that are at position pos
+      if not photographs[j].Ignore then P:=photographs[j].Position;
+      if Copy(P,Length(P),1)='=' then
+      begin
+       P:=Copy(P,1,Length(P)-1);
+       e:=IntToPos(StrToIntDef(P,0))+'=';
+      end
+      else e:=IntToPos(StrToIntDef(P,0));
+     end;
+     S:='';
+     case DetailSelectionForm.rg_SortBy.ItemIndex of
+      0:test:=(StrToIntDef(P,0)=pos) and (results=0);//Sorted by position (monthly)
+      1:test:=(photographs[j].Title=ps[pos-1]) and (results=0);//Sorted by title (monthly)
+      2:test:=(photographs[j].Author=pos) and (results=0);//Sorted by author (monthly)
+     else
+      test:=false;
+     end;
+     if (test) or (results=1) then
+     begin
+      if (results=0) and (not photographs[j].Ignore) then
+      begin
+       if (output=1) or (output=3) then
+       begin
+        if DetailSelectionForm.cb_Title.Checked then
+         S:=S+'"'+photographs[j].Title+'"';
+        if  (DetailSelectionForm.cb_Title.Checked)
+        and (DetailSelectionForm.cb_Author.Checked) then
+         S:=S+' by ';
+        if DetailSelectionForm.cb_Author.Checked then
+         S:=S+MembersList[photographs[j].Author];
+        if DetailSelectionForm.cb_ID.Checked then
+         S:=S+' ('+photographs[j].ID+')';
+        S:=S+' scored '+IntToStr(photographs[j].Score)+' points';
+       end;
+       if output=2 then
+        begin
+         if DetailSelectionForm.cb_Title.Checked then
+          S:=S+'"'+photographs[j].Title+'",';
+         if DetailSelectionForm.cb_Author.Checked then
+          S:=S+'"'+MembersList[photographs[j].Author]+'",';
+         if DetailSelectionForm.cb_ID.Checked then
+          S:=S+'"'+photographs[j].ID+'",';
+         S:=S+'"'+IntToStr(photographs[j].Score)+'"';
+        end;
+       //Position Tallies
+       if DetailSelectionForm.cb_Tally.Checked then
+        if not competitions[comp_title.Tag].Ext_judge then
+         if (output=2) or (output=3) then
+          for k:=0 to season.m_places_to_score-1 do
+          begin
+           if output=2 then
+            S:=S+',"'+Copy(photographs[j].Tally,(k*2)+1+3,2)+'"';
+           if output=3 then
+           begin
+            if k>0 then S:=S+', ' else S:=S+' (';
+            S:=S+IntToPos(k+1)+'s:'
+                +IntToStr(StrToIntDef((Copy(photographs[j].Tally,(k*2)+1+3,2)),0));
+            if k=season.m_Places_to_score-1 then S:=S+')';
+           end;
+          end;
+       //Positions
+       if DetailSelectionForm.cb_Position.Checked then
+       begin
+        if (output=1) or (output=3) then S:=e+':'+S;
+        if output=2 then S:='"'+e+'",'+S;
+       end;
+      end;
+      //Annual results
+      if results=1 then
+      begin
+       if (output=1) or (output=3) then
+       begin
+        S:=IntToPos(pos);
+        if mem_pos[cat,j].equal then S:=S+'=';
+        S:=S+' '+mem_pos[cat,j].Name
+            +' scored '+IntToStr(mem_pos[cat,j].Score)
+            +' points';
+        if DetailSelectionForm.cb_Tally.Checked then
+         for k:=0 to season.a_Places_to_score-1 do
+          S:=S+' '+IntToPos(k+1)+'s: '
+              +IntToStr(StrToIntDef(Copy(mem_pos[cat,j].Tally,(k*2)+1+3,2),0));
+       end;
+       if output=2 then
+       begin
+        S:='"'+IntToPos(pos);
+        if mem_pos[cat,j].equal then S:=S+'=';
+        S:=S+'","'+mem_pos[cat,j].Name+'",'
+            +'"'+IntToStr(mem_pos[cat,j].Score)+'"';
+        if DetailSelectionForm.cb_Tally.Checked then
+         for k:=0 to season.a_Places_to_score-1 do
+          S:=S+',"'+Copy(mem_pos[cat,j].Tally,(k*2)+1+3,2)+'"';
+       end;
+       mem_pos[cat,j].Pos:=0;
+      end;
+      if output=1 then
+      begin
+       //Create the button, if required
+       if results=0 then
+        if not competitions[comp_title.Tag].Ext_judge then
+        begin
+         SetLength(buttons[cat],i+1);
+         buttons[cat,i]:=CreateSpeedButton(i*20,j,SB);
+         buttons[cat,i].Glyph:=ResultsForm.detail_results_btn.Glyph;
+         buttons[cat,i].OnClick:=ShowTally;
+        end;
+       //Create the label and increase the counter
+       SetLength(labels[cat],i+1);
+       labels[cat,i]:=CreateLabel(S,20,i*20,SB);
+      end;
+      if output=2 then
+       WriteLn(F,S);
+      if output=3 then
+      begin
+       PrintLine(S,'Arial',10,left_margin,[]);
+       if Printer.Canvas.PenPos.Y>h-bottom_margin-442 then
+       begin
+        PrintFooter;
+        Printer.NewPage;
+        PrintHeader(title,cat);
+       end;
+      end;
+      inc(i);
+     end;
+    end;
+   end;
+   inc(pos);
+   //continue until we have all our places (which could be more than what is expected)
+   test:=false;
+   if results=0 then
+   begin
+    if output=1 then
+    begin
+     test:=pos>=season.m_Places_to_score+1;
+     ProgressBar1.Position:=Round((pos/season.m_Places_to_score)*100)+(cat*100);
+    end
+    else
+    begin
+     test:=i>=Length(panl_ID[cat]);
+     ProgressBar1.Position:=Round((i/Length(panl_ID[cat]))*100)+(cat*100);
+    end;
+   end;
+   if results=1 then
+   begin
+    test:=pos=Length(mem_pos[cat]);
+    ProgressBar1.Position:=Round((pos/Length(mem_pos[cat]))*100)+(cat*100);
+   end;
+   ProgressBar1.Update;
+  until test;
+  //End of category, so start a new page (if not on the last)
+  if output=3 then
+  begin
+   PrintFooter;
+   if cat<season.Num_categories-1 then Printer.NewPage;
+  end;
+ end;
+ //Reset the progress bar
+ ProgressBar1.Position:=0;
+ ProgressBar1.Update;
+ //Show the form or close down the file/print job
+ if output=1 then
+ begin
+  ResultsForm.ShowModal;
+  for i:=0 to ResultsForm.pages.PageCount-1 do
+   ResultsForm.pages.ActivePage.Free;
+ end;
+ if output=2 then CloseFile(F);
+ if output=3 then Printer.EndDoc;
 end;
 
 end.

@@ -1,2 +1,0 @@
-Windows text file format, EOL: 0D 0A
-Mac text file format, EOL: 0A
