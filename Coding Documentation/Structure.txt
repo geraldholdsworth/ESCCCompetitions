@@ -1,0 +1,298 @@
+Record structures - found in the Global Unit
+--------------------------------------------
+
+season [TSeason]
+TSeason		: Details of season
+ Filename          [String]	: Filename of season file
+ Title             [String]	: Title of season [e.g. 2016/17]
+ Num_categories    [Integer]	: Number of categories [e.g. 3 for Colour, Monochrome and Creative]
+ A_places_to_score [Integer]	: Number of places to score for annual competition
+ M_places_to_score [Integer]	: Number of places to score for monthly competition
+ Num_competitions  [Integer]	: Number of competitions in season [usually 6]
+ Start_Month       [Integer]	: Month when season starts
+ IncEntries        [Integer]	: Number of entries to include in the annual competition
+
+categories [array of String]	: Titles of categories
+
+competitions [array of TCompetitions]
+TCompetitions	: Details of competitions
+ Month             [Integer]	: Month number of competition - index into MonthList array
+ Title             [String]	: Title of competition [e.g. Open]
+ Deleted           [Boolean]	: Whether competition is deleted or not - not currently used, but saved to the file
+ Ext_judge         [Boolean]	: Is competition judged externally [TRUE] or internally [FALSE]
+
+photographs [array of TPhotographs]
+TPhotographs	: Details of photographs
+ Competition       [Integer]	: Index into Competition array for competition entered
+ Category          [Integer]	: Index into Category array for category entered
+ Author            [Integer]	: Index into Members array for author of photograph
+ Title             [String]	: Title of photograph
+ ID                [String]	: ID given to photograph at competition
+ Voting            [String]	: String of votes received (length should equal number of voting slips)
+ Score             [Integer]	: Final score in competition for photograph
+ Position          [Integer]	: Final position in competition for photograph
+ Tally             [String]	: Number of firsts, seconds, etc. awarded, as a string (2 characters per place) - NOT SAVED
+ Counted           [Boolean]	: Switch used for various checks - NOT SAVED
+
+m_scoring    [array of Integer]	: Points to award per place in monthly competitions
+a_scoring    [array of Integer]	: Points to award per place for annual competitions
+
+members [array of TMembers]
+TMembers		: Details of members
+ Forename          [String]	: Forename of member
+ Surname           [String]	: Surname of member
+ Score       [array of Integer]	: Scores acheived towards the annual competition - per category
+
+MembersList  [array of String]	: Collated from the members array and contains the forname and surnames put together.
+				  This is for the purpose of populating the drop down lists on the competitions page.
+For both the members and MembersList arrays, the first element [0] is reserved thus:
+members[0].Forename:='';members[0].Surname:='';MembersList[0]:='<none selected>'
+
+v_slips [array of TVoting]
+TVoting		: Voting slips
+ Competition       [Integer]	: Index into Competition array for competition
+ Category          [Integer]	: Index into Category array for category
+ Places       [array of String]	: Photographs voted for, in order [length should be same as TSeason.M_places_to_score]
+ Used              [Boolean]	: Whether voting slip is deleted or not. Those with this set as FALSE are skipped on saving - NOT SAVED
+
+Constants
+---------
+MonthList      [array of String]	: List of months (1=January..12=December, 13=Annual)
+RegKey				: Registry Key (\Software\GJH Software\ESCC Competitions)
+The following have variables the same, without the 'c_' prefix. This prefix denotes a constant, and are the default values should the registry be empty. The variable version are what is read from the registry, so can be changed by the user.
+c_def_num_categories		: Default number of categories (3)
+c_def_categories[array of String]	: Default list of categories (Colour, Monochrome, Creative)
+c_def_a_places_to_score		: Default number of places to score for annual (20)
+c_def_a_scores [array of String]	: Default scores, per place, annual
+c_def_m_places_to_score		: Default number of places to score for monthly (4)
+c_def_m_scores [array of String]	: Default scores, per place, monthly
+c_def_num_competitions		: Default number of competitions per season (6)
+
+Methods
+-------
+function CreateLabel(name: String; l,t: Integer; parent: TComponent): TLabel;
+ Creates a label control. <name> is the caption, <l> is Left, <t> is top, and <parent> is the parent control.
+
+function CreateEdit(l,t,w: Integer; readonly: Boolean;parent: TComponent): TEdit;
+ Creates a edit box control. <l> is Left, <t> is top, <w> is width, <readonly> is whether it is Read Only, and <parent> is the parent control.
+
+function CreatePanel(title: String; l,t,w: Integer;parent: TComponent): TPanel;
+ Creates a panel control. <title> is the caption, <l> is Left, <t> is top, <w> is width, and <parent> is the parent control.
+
+function CreateComboBox(l,t,w: Integer;parent: TComponent): TComboBox;
+ Creates a combo box control. <l> is Left, <t> is top, <w> is width, and <parent> is the parent control.
+
+function CreateCheckBox(l,t: Integer;parent: TComponent): TCheckBox;
+ Creates a tick box control. <l> is Left, <t> is top, and <parent> is the parent control.
+
+function CreateScrollBox(parent: TComponent): TScrollBox;
+ Creates a scroll box control. <parent> is the parent control.
+
+function CreateSpeedButton(t,tag: Integer; parent: TComponent): TSpeedButton;
+ Creates a panel control. <t> is top, <tag> is the tag, and <parent> is the parent control.
+
+function CreatePage(parent: TPageControl; text: String): TTabSheet;
+ Creates a panel control. <parent> is the parent control, and <text> is the title.
+
+function CreateImage(l,t,tag: Integer; parent: TComponent): TImage;
+ Creates a panel control. <l> is Left, <t> is top, <tag> is the tag, and <parent> is the parent control.
+
+function ConvertFromID(ID: String): Integer;
+ Converts from a photograph ID (A,B,C, etc.) to a number (0,1,2, etc.)
+
+function ConvertToID(X: Integer): String;
+ Converts from a number (0,1,2, etc.) to a photograph ID (A,B,C, etc.)
+
+function IntToPos(i: Integer): String;
+ Converts an integer <i> to a string with 'st', 'nd', 'rd' or 'th' as a suffix
+
+function IntToPadStr(S: Integer; P: Char;L: Integer): String;
+ Converts an integer to a string and pads it with <L> number of character <P> at the beginning
+
+function AppVersion: String;
+ Returns the version of the application.
+
+function CompareVersion(current,minimum: String):Boolean;
+ Compares <current> with <minimum> and returns TRUE if it is bigger or equal.
+
+function extractExtension(filename: String): String;
+ Extracts the extension part of <filename> - includes the '.' separater.
+
+function SeekLn(var F: TFileStream; tofind: String): Boolean;
+ Searches through file <F>, which must be a TFileStream, for the text <tofind>. Returns TRUE if successful.
+
+function MakeFilenameValid(S: String): String;
+ Ensures that filename <S> contains only valid characters for the Windows file system. Any that are not valid are replaced with a space.
+
+procedure Swap(var a,b: Integer or String);
+ Swaps variables <a> and <b>, so that <a>=<b> and <b>=<a>.
+
+procedure ArraySort(var p: array of Integer or String);
+ Sorts array <p> into descending order.
+
+procedure ArraySortA(var p: array of String);
+ Sorts array <p> into ascending order.
+
+function FillString(s: Char;l: Integer): String;
+ Returns a string filled with <l> number of character <s>
+
+function ReadLine(var Stream: TFileStream;var Line: string): boolean;
+ Similar to a TextFile ReadLn function, but for TFileStream.
+
+function CustomMessageDlg(const Msg: string;DlgTypt: TmsgDlgType;button: TMsgDlgButtons;Caption: array of string;dlgcaption: string;default: TMsgDlgBtn): Integer;
+ As for ShowMessage, but allows custom buttons, held in array <Caption>.
+
+Registry Methods
+----------------
+procedure OpenReg(key: String);				: Opens the registry key
+function DeleteKey(key: String): Boolean;			: Deletes a registry key
+function GetRegValS(V: String;D: String): String;		: Gets a string from the currently open registry key. Creates if does not exist (<D> is default).
+procedure GetRegValA(V: String;var D: array of Byte);	: Gets an array from the currently open registry key. Creates if does not exist (<D> is default, and return array).
+function GetRegValI(V: String;D: Cardinal): Cardinal;	: Gets an integer from the currently open registry key. Creates if does not exist (<D> is default).
+function GetRegValB(V: String;D: Boolean): Boolean;	: Gets a boolean from the currently open registry key. Creates if does not exist (<D> is default).
+procedure SetRegValS(V: String;D: String);			: Saves a string <D> to the currently open registry key.
+procedure SetRegValA(V: String;var D: array of Byte);	: Saves an array <D> to the currently open registry key.
+procedure SetRegValI(V: String;D: Cardinal);		: Saves an integer <D> to the currently open registry key.
+procedure SetRegValB(V: String;D: Boolean);		: Saves a boolean <D> to the currently open registry key.
+function ExtractKey(var V: String):String;			: Extracts the key part of <V>. Used for subkeys.
+
+Public (global) variables in MainUnit
+-------------------------------------
+
+    //Season details of currently loaded season
+    season             : TSeason;
+    //Array of category names
+    categories,
+    //Array of concatenated members names (i.e. forename+surname)
+    MembersList        : array of String;
+    //Array for competition details for currently loaded season
+    competitions       : array of TCompetitions;
+    //Array for photograph details for currently loaded season
+    photographs        : array of TPhotographs;
+    //How the photographs are scored monthly
+    m_scoring,
+    //How the photographs are scored annually
+    a_scoring          : array of Integer;
+    //Array of members, full details, of currently loaded season
+    members            : TMembersArray;
+    //Array of voting slips of currently loaded season
+    v_slips            : array of TVoting;
+    //Panel array for voting slip IDs
+    panl_vslip,
+    //Panel array for splitters between categories on voting slip page
+    panl_splitter      : array of TPanel;
+    //Panel array for photograph IDs
+    panl_ID            : array of array of TPanel;
+    //Editbox arrays for member's details (surname,forename and photo count)
+    edit_surname,
+    edit_forename,
+    edit_photocount,
+    //Editbox array for maximum photo ID on voting slip page
+    edit_maxphotoID    : array of TEdit;
+    //Editbox arrays for photograph details (title, score, voting, and position)
+    edit_title,
+    edit_score,
+    edit_voting,
+    edit_place         : array of array of TEdit;
+    //Editbox array for voting slip entries
+    edit_vslip         : array of array of array of TEdit;
+    //Combobox array for author field on photograph details
+    cbox_author        : array of array of TComboBox;
+    //Array of Add buttons
+    add_btn,
+    //Array of Open competiton buttons
+    open_btn,
+    //Array of Delete competition buttons
+    delcomp_btn,
+    //Array of Delete member buttons
+    SB_deletemember,
+    //Array of Delete voting slip buttons
+    delvotslip_btn     : array of TSpeedButton;
+    //Array of judging type images, used on the competition pane
+    judge_img          : array of TImage;
+    //Scroll box used on the voting slip page
+    sb_vslip           : TScrollBox;
+
+Constants defined in MainUnit
+-----------------------------
+     //Date application was last updated
+     AppDate                           = '16th February 2017';
+     //Column Left positions and widths for competition layouts
+     ColumnPos: array[1..7] of Integer = ( 0, 20,220,420,460,730,540);
+     ColumnWid: array[1..7] of Integer = (20,200,200, 40,270, 40, 80);
+     //Max length of photograph IDs
+     photo_maxlength                   = 2;
+     //Width of each character in pixels
+     widthperchar                      = 12;
+     //Height of all the controls
+     controlheight                     = 22;
+     //Version of file - this is different to application version
+     filever                           = '0.02';
+     //What to put when no photo title is entered
+     blank_title                       = 'No Title Entered';
+     //Hints for deleting/undeleting voting slips
+     delvs_hint                        = 'Delete Voting Slip';
+     undelvs_hint                      = 'Undelete Voting Slip';
+
+Procedures and functions in MainUnit
+------------------------------------
+    procedure FormCreate(Sender: TObject);
+    procedure ImportMembers(Sender: TObject);
+    function CheckForDuplicates(f,s: String): Boolean;
+    procedure btn_a_resultsClick(Sender: TObject);
+    procedure OutputAnnualResults(output: Integer);
+    procedure EditSeason(Sender: TObject);
+    procedure pic_judgeClick(Sender: TObject);
+    procedure btn_recalculateClick(Sender: TObject);
+    procedure print_btnClick(Sender: TObject);
+    procedure btn_saveresultsClick(Sender: TObject);
+    procedure comp_titleEnter(Sender: TObject);
+    procedure btn_resultsClick(Sender: TObject);
+    procedure OutputCompResults(output: Integer);
+    procedure ShowTally(Sender: TObject);
+    procedure DeletePhotographs(Sender: TObject);
+    procedure PageIsChanging(Sender: TObject; var AllowChange: Boolean);
+    procedure btn_votingslipClick(Sender: TObject);
+    procedure AddNewVotingSlip(dialogue: Boolean);
+    procedure AddVotingControl(comp,x: Integer);
+    procedure season_titleExit(Sender: TObject);
+    procedure MaxPhotoIDExit(Sender: TObject);
+    procedure EditorKeyPress(Sender: TObject; var Key: Char);
+    procedure AddPhotoOrMember(Sender: TObject);
+    procedure DeleteMember(Sender: TObject);
+    procedure DeleteVoteSlip(Sender: TObject);
+    function PhotosPerCat(comp,cat: Integer): Integer;
+    function VSlipsPerComp(comp: Integer): Integer;
+    procedure AddPhotoControl(comp,cat,x: Integer);
+    procedure MarkEmptyPhotos(cat,y: Integer);
+    procedure AddNewPhotograph(tab: Integer);
+    procedure OpenSeasonClick(Sender: TObject);
+    procedure LoadSeason(filename: String);
+    procedure FreeMemberControls;
+    procedure LoadInMembers(var F: TFileStream);
+    procedure NewSeasonClick(Sender: TObject);
+    procedure SaveSeasonFile;
+    procedure EmptySeasonArray;
+    procedure CloseCompetition;
+    procedure comp_titleKeyUp(Sender: TObject;var Key: Word;Shift: TShiftState);
+    procedure OpenCompetition(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure HelpAbout1Execute(Sender: TObject);
+    procedure FileExit1Execute(Sender: TObject);
+    procedure PopulateComboBox(var cb: TComboBox;list: array of String);
+    procedure EnableControls(controls: Integer);
+    procedure AddNewCompControl;
+    procedure SetUpMembersList;
+    procedure ValidateVSlips(num_vslips: Integer);
+    procedure RecalculateResults(comp: Integer);
+    procedure UpdatePhotoCount;
+    procedure AddNewMember;
+    procedure RePopulateMembers;
+    procedure AddMemberControl(member: Integer);
+    procedure btn_save_a_resultsClick(Sender: TObject);
+    procedure SortMembers;
+    function CountPhotographs(member: Integer): Integer;
+    procedure ImportPhotos(Sender: TObject);
+    procedure PageHasChanged(Sender: TObject);
+    function FindAuthor(S: String): Integer;
+    procedure DeleteCompetition(Sender: TObject);

@@ -1,0 +1,18 @@
+Action					Shortcut	OnClick
+New Season				Ctrl+N		NewSeasonClick
+Open Season				Ctrl+O		OpenSeasonClick
+Edit Season				Ctrl+E		EditSeason
+Import Members				Ctrl+M		ImportMembers
+Display Photographers Of The Year	Shift+Ctrl+A	btn_a_resultsClick
+Print Photographers Of The Year		Shift+Ctrl+Q	btn_prt_a_resultsClick
+Save Photographers Of The Year		Shift+Ctrl+Z	btn_save_a_resultsClick
+Import Photographs			Shift+Ctrl+I	ImportPhotos
+New Voting Slip				Shift+Ctrl+N	btn_votingslipClick
+Delete Redundant Photographs		Shift+Ctrl+Del	DeletePhotographs
+Recalculate Results			Shift+Ctrl+R	btn_recalculateClick
+Display Competition Results		Shift+Ctrl+C	btn_resultsClick
+Print Competition Results		Shift+Ctrl+P	print_btnClick
+Save Competition Results		Shift+Ctrl+S	btn_saveresultsClick
+Preferences				Ctrl+P		settings_btnClick
+Goto Website				Shift+Ctrl+W	WebLinkBtnClick
+About Application			F1		HelpAbout1Execute

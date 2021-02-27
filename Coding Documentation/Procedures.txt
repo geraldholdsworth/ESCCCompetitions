@@ -1,0 +1,90 @@
+New Season
+	NewSeasonClick
+		SaveSeasonFile
+		EmptySeasonArray
+			EnableControls
+		SetUpMembersList
+		SaveSeasonFile
+		EnableControls
+Open Season
+	OpenSeasonClick
+		SaveSeasonFile
+		EmptySeasonArray
+			EnableControls
+		LoadInMembers
+			AddMemberControls
+		EnableControls
+Load Members
+	LoadMembersClick
+		LoadInMembers
+			AddMemberControls
+		RePopulateMembers
+		SaveSeasonFile
+Display Annual Results
+	btn_a_resultsClick
+		SaveSeasonFile
+Print Annual Results
+	n/a
+Save Annual Results
+	n/a
+Add New Voting Slip
+	btn_votingslipClick
+		AddNewVotingSlip
+			AddVotingControl
+			SaveSeasonFile
+		ValidateVSlips
+		RecalculateResults
+			ValidateVSlips
+			AddNewPhotograph
+			SaveSeasonFile
+Delete Photographs
+	btn_delphotographsClick
+		RecalculateResults
+			ValidateVSlips
+			AddNewPhotograph
+			SaveSeasonFile
+		SaveSeasonFile
+Recalculate Positions
+	btn_recalculateClick
+		RecalculateResults
+			ValidateVSlips
+			AddNewPhotograph
+			SaveSeasonFile
+Display Competition Results
+	btn_resultsClick
+		OutputCompResults
+			RecalculateResults
+				ValidateVSlips
+				AddNewPhotograph
+				SaveSeasonFile
+Print Competition Results
+	print_btnClick
+		OutputCompResults
+			RecalculateResults
+				ValidateVSlips
+				AddNewPhotograph
+				SaveSeasonFile
+Save Competition Results
+	btn_saveresultsClick
+		OutputCompResults
+			RecalculateResults
+				ValidateVSlips
+				AddNewPhotograph
+				SaveSeasonFile
+About
+	HelpAbout1Execute
+Edit Details
+	sb_editseasonClick
+Open Competition
+	open_compClick
+		AddNewCompControl
+		RecalculateResults
+			ValidateVSlips
+			AddNewPhotograph
+			SaveSeasonFile
+Add button
+	AddNewPhotograph
+	AddNewVotingSlip
+	AddNewMember
+		RePopulateMembers
+{needs procedure to close competition}

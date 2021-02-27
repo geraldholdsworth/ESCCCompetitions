@@ -1,0 +1,8 @@
+Specifications of a season
+
+Categories:		Min: 1	Max: 6
+Competitions:		Min: 2	Max: 12
+Photographs:		Min: 0	Max: 100 (although IDs only allow up to 52) per competition
+Voting Slips:		Min: 0	Max: unlimited, per competition
+Monthly scoring:	Min: 3	Max: 9, per competition
+Annual scoring:		Min: 3	Max: 100

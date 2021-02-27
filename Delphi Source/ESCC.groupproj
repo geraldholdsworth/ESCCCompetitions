@@ -1,0 +1,36 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{6752835A-99CE-4069-9D85-9D8CC8D5F612}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="ESCCCompetions.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="ESCCCompetions">
+        <MSBuild Projects="ESCCCompetions.dproj"/>
+    </Target>
+    <Target Name="ESCCCompetions:Clean">
+        <MSBuild Projects="ESCCCompetions.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ESCCCompetions:Make">
+        <MSBuild Projects="ESCCCompetions.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="ESCCCompetions"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="ESCCCompetions:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="ESCCCompetions:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

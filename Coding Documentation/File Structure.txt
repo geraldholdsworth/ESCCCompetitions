@@ -1,0 +1,52 @@
+File is largely a text file, with *.escc extension. Entries are terminated with a 0x0A byte (Apple Mac style EOL marker). Backups are *.escc.back.
+First line will be the file version number (NOT application version number). This is used to check compatability. Currently, this is 0.03.
+Next five lines are a header.
+Line 7 is empty.
+From line 8 are the various parts of the data, each with a single line header describing the data which follows.
+Each line is a seperate entry of data, terminated by <CR><LF> (Windows style). Each entry will relate to the global variable structure. The following sections do not need to be in this order, but MUST be indicated by the header text.
+Header Text: ========Season Details========
+Season Title [STRING]
+Number of categories [INTEGER]
+Annual Places to score [INTEGER]
+Monthly places to score [INTEGER]
+Number of competitions [INTEGER]
+Season Start of Month [INTEGER]
+Annual competition included entries [INTEGER]
+Header Text: ========Category Details========
+Category titles (equal to number of categories) [STRINGS]
+Header Text: ========Competition Details========
+For each competition, in order:
+Month [INTEGER]
+Title [STRING]
+External judge [BOOLEAN]
+Deleted [BOOLEAN]
+Header Text: ========Scoring - annual========
+Points awarded for each place, in order [INTEGERS]
+Header Text: ========Scoring - monthly========
+Points awarded for each place, in order [INTEGERS]
+Header Text: ========Voting Slips========
+Total number of voting slips (for all competitions) - should be divisible by the number of categories [INTEGER]
+For every voting slip:
+Competition [INTEGER]
+Category [INTEGER]
+Places scored (entries should be equal to the number of monthly places scored) [STRINGS]
+Header Text: ========Photographs========
+Total number of photographs (for all competitions) [INTEGER]
+For every photograph:
+Competition [INTEGER]
+Category [INTEGER]
+Author (index into members) [INTEGER]
+Title [STRING]
+ID [STRING]
+Voting/Judged place [STRING]
+Score [INTEGER]
+Position [STRING]
+Header Text: ========Members========
+Number of members [INTEGER]
+For every member:
+Forename [STRING]
+Surname [STRING]
+and for every category:
+Score [INTEGER]
+
+Note - in the code, the reference to the Author is increased by one when loaded and decreased by one when saved. This is because the first element of the MembersList array is a special one, where no author is selelected. Therefore, expect to find an entry of '-1'.
