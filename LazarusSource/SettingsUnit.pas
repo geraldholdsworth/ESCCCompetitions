@@ -1,13 +1,13 @@
 unit SettingsUnit;
 
-{$MODE Delphi}
+{$MODE objfpc}{$H+}
 
 interface
 
 uses
-  {Winapi.Windows,Winapi.Messages,System.SysUtils,System.Variants,System.Classes,
-  Vcl.Graphics,Vcl.Controls,Vcl.Forms,Vcl.Dialogs,}Global{, Vcl.StdCtrls,
-  Vcl.Buttons, Vcl.ExtCtrls, Vcl.ComCtrls};
+  SysUtils,Variants,Classes,
+  Graphics,Controls,Forms,Dialogs,Global,StdCtrls,
+  Buttons,ExtCtrls,ComCtrls;
 
 type
   TSettingsForm = class(TForm)

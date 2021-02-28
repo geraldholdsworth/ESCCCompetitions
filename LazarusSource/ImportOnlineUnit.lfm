@@ -1,40 +1,38 @@
 object ImportOnlineForm: TImportOnlineForm
-  Left = 0
-  Top = 0
+  Left = 789
+  Height = 475
+  Top = 297
+  Width = 323
   BorderIcons = []
   BorderStyle = bsDialog
   Caption = 'Import Online Competition'
   ClientHeight = 475
   ClientWidth = 323
   Color = clBtnFace
-  Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
-  Font.Style = []
-  OldCreateOrder = False
-  Position = poMainFormCenter
   OnShow = FormShow
-  PixelsPerInch = 96
-  TextHeight = 13
+  Position = poMainFormCenter
+  LCLVersion = '2.0.12.0'
   object Label1: TLabel
     Left = 8
-    Top = 8
-    Width = 133
     Height = 13
+    Top = 8
+    Width = 131
     Caption = 'Available Competitions:'
-    Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
+    ParentColor = False
     ParentFont = False
   end
   object SpeedButton1: TSpeedButton
     Left = 0
+    Height = 22
     Top = 407
     Width = 127
-    Height = 22
     Caption = 'Import Competition'
     Flat = True
     Glyph.Data = {
@@ -49,15 +47,16 @@ object ImportOnlineForm: TImportOnlineForm
       00007777777F7737777709999990FFF0FF0377777777FF37F3730999999908F0
       F033777777777337F73309999990FFF0033377777777FFF77333099999000000
       3333777777777777333333399033333333333337773333333333333903333333
-      3333333773333333333333303333333333333337333333333333}
+      3333333773333333333333303333333333333337333333333333
+    }
     NumGlyphs = 2
     OnClick = SpeedButton1Click
   end
   object SpeedButton2: TSpeedButton
     Left = 192
+    Height = 22
     Top = 407
     Width = 129
-    Height = 22
     Caption = 'Cancel'
     Flat = True
     Glyph.Data = {
@@ -72,53 +71,50 @@ object ImportOnlineForm: TImportOnlineForm
       399377F333777FF3377F993333399933399377F3333777FF377F993333339993
       399377FF3333777FF7733993333339993933373FF3333777F7F3399933333399
       99333773FF3333777733339993333339933333773FFFFFF77333333999999999
-      3333333777333777333333333999993333333333377777333333}
+      3333333777333777333333333999993333333333377777333333
+    }
     NumGlyphs = 2
     OnClick = SpeedButton2Click
   end
   object Label5: TLabel
     Left = 0
+    Height = 44
     Top = 431
     Width = 323
-    Height = 44
     Align = alBottom
     Alignment = taCenter
     AutoSize = False
-    Caption = 
-      'Please note that importing an entire competition will erase all ' +
-      'the images and votes in the currently selected competition.'
-    Font.Charset = DEFAULT_CHARSET
+    Caption = 'Please note that importing an entire competition will erase all the images and votes in the currently selected competition.'
     Font.Color = clRed
     Font.Height = -11
     Font.Name = 'Tahoma'
     Font.Style = [fsBold, fsItalic]
+    ParentColor = False
     ParentFont = False
     WordWrap = True
-    ExplicitTop = 448
   end
   object CompList: TTreeView
     Left = 0
+    Height = 298
     Top = 24
     Width = 321
-    Height = 298
-    BevelInner = bvLowered
-    BevelOuter = bvRaised
-    BevelKind = bkSoft
-    BevelWidth = 2
+    BackgroundColor = clBtnFace
     BorderStyle = bsNone
     Color = clBtnFace
     Indent = 19
     ReadOnly = True
     TabOrder = 0
     OnClick = CompListClick
+    Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoReadOnly, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips, tvoThemedDraw]
   end
   object GroupBox1: TGroupBox
     Left = 0
+    Height = 73
     Top = 328
     Width = 321
-    Height = 73
     Caption = 'Competition Details'
-    Font.Charset = DEFAULT_CHARSET
+    ClientHeight = 55
+    ClientWidth = 313
     Font.Color = clWindowText
     Font.Height = -11
     Font.Name = 'Tahoma'
@@ -127,104 +123,84 @@ object ImportOnlineForm: TImportOnlineForm
     TabOrder = 1
     object Label2: TLabel
       Left = 16
+      Height = 13
       Top = 16
       Width = 111
-      Height = 13
       Alignment = taRightJustify
       AutoSize = False
       Caption = 'Season:'
-      Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
       Font.Name = 'Tahoma'
-      Font.Style = []
+      ParentColor = False
       ParentFont = False
     end
     object Label3: TLabel
       Left = 16
+      Height = 13
       Top = 32
       Width = 111
-      Height = 13
       Alignment = taRightJustify
       AutoSize = False
       Caption = 'Competition:'
-      Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
       Font.Name = 'Tahoma'
-      Font.Style = []
+      ParentColor = False
       ParentFont = False
     end
     object Label4: TLabel
       Left = 16
+      Height = 13
       Top = 48
       Width = 111
-      Height = 13
       Alignment = taRightJustify
       AutoSize = False
       Caption = 'Total Number of Votes:'
-      Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
       Font.Name = 'Tahoma'
-      Font.Style = []
+      ParentColor = False
       ParentFont = False
     end
     object lb_seasonname: TLabel
       Left = 133
+      Height = 13
       Top = 16
       Width = 172
-      Height = 13
       AutoSize = False
-      Font.Charset = DEFAULT_CHARSET
       Font.Color = clNavy
       Font.Height = -11
       Font.Name = 'Tahoma'
       Font.Style = [fsItalic]
+      ParentColor = False
       ParentFont = False
     end
     object lb_compname: TLabel
       Left = 133
+      Height = 13
       Top = 32
       Width = 172
-      Height = 13
       AutoSize = False
-      Font.Charset = DEFAULT_CHARSET
       Font.Color = clNavy
       Font.Height = -11
       Font.Name = 'Tahoma'
       Font.Style = [fsItalic]
+      ParentColor = False
       ParentFont = False
     end
     object lb_numvotes: TLabel
       Left = 133
+      Height = 13
       Top = 48
       Width = 172
-      Height = 13
       AutoSize = False
-      Font.Charset = DEFAULT_CHARSET
       Font.Color = clNavy
       Font.Height = -11
       Font.Name = 'Tahoma'
       Font.Style = [fsItalic]
+      ParentColor = False
       ParentFont = False
     end
-  end
-  object http_escc: TIdHTTP
-    AllowCookies = True
-    ProxyParams.BasicAuthentication = False
-    ProxyParams.ProxyPort = 0
-    Request.ContentLength = -1
-    Request.ContentRangeEnd = -1
-    Request.ContentRangeStart = -1
-    Request.ContentRangeInstanceLength = -1
-    Request.Accept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-    Request.BasicAuthentication = False
-    Request.UserAgent = 'Mozilla/3.0 (compatible; Indy Library)'
-    Request.Ranges.Units = 'bytes'
-    Request.Ranges = <>
-    HTTPOptions = [hoForceEncodeParams]
-    Left = 7
-    Top = 32
   end
 end

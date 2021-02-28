@@ -3,7 +3,7 @@
   <ProjectSession>
     <Version Value="11"/>
     <BuildModes Active="Default"/>
-    <Units Count="12">
+    <Units Count="11">
       <Unit0>
         <Filename Value="ESCCCompetions.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -13,92 +13,144 @@
       <Unit1>
         <Filename Value="MainUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="MainForm"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="842"/>
+        <CursorPos X="25" Y="859"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit1>
       <Unit2>
         <Filename Value="AboutUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="AboutForm"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
         <EditorIndex Value="9"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit2>
       <Unit3>
         <Filename Value="VotingUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="VotingForm"/>
         <HasResources Value="True"/>
-        <EditorIndex Value="8"/>
+        <ResourceBaseClass Value="Form"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="64"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit3>
       <Unit4>
         <Filename Value="SeasonDetailUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="SeasonDetailForm"/>
         <HasResources Value="True"/>
-        <EditorIndex Value="6"/>
+        <ResourceBaseClass Value="Form"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="52"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit4>
       <Unit5>
         <Filename Value="ResultsUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="ResultsForm"/>
         <HasResources Value="True"/>
-        <EditorIndex Value="5"/>
+        <ResourceBaseClass Value="Form"/>
+        <EditorIndex Value="8"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit5>
       <Unit6>
         <Filename Value="Global.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
         <UsageCount Value="20"/>
-        <Loaded Value="True"/>
       </Unit6>
       <Unit7>
         <Filename Value="ImportUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="ImportForm"/>
         <HasResources Value="True"/>
-        <EditorIndex Value="3"/>
+        <ResourceBaseClass Value="Form"/>
+        <EditorIndex Value="7"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit7>
       <Unit8>
         <Filename Value="SettingsUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="SettingsForm"/>
         <HasResources Value="True"/>
-        <EditorIndex Value="7"/>
+        <ResourceBaseClass Value="Form"/>
+        <EditorIndex Value="4"/>
+        <TopLine Value="76"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit8>
       <Unit9>
         <Filename Value="DetailSelectionUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="DetailSelectionForm"/>
         <HasResources Value="True"/>
-        <EditorIndex Value="11"/>
+        <ResourceBaseClass Value="Form"/>
+        <EditorIndex Value="5"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit9>
       <Unit10>
         <Filename Value="ImportOnlineUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="ImportOnlineForm"/>
         <HasResources Value="True"/>
-        <EditorIndex Value="2"/>
+        <ResourceBaseClass Value="Form"/>
+        <EditorIndex Value="6"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit10>
-      <Unit11>
-        <Filename Value="adpMRU.pas"/>
-        <IsPartOfProject Value="True"/>
-        <EditorIndex Value="10"/>
-        <UsageCount Value="20"/>
-        <Loaded Value="True"/>
-      </Unit11>
     </Units>
-    <JumpHistory HistoryIndex="-1"/>
+    <JumpHistory Count="6" HistoryIndex="5">
+      <Position1>
+        <Filename Value="MainUnit.pas"/>
+        <Caret Line="22" Column="70"/>
+      </Position1>
+      <Position2>
+        <Filename Value="MainUnit.pas"/>
+        <Caret Line="62" Column="19"/>
+      </Position2>
+      <Position3>
+        <Filename Value="MainUnit.pas"/>
+        <Caret Line="64" Column="19" TopLine="31"/>
+      </Position3>
+      <Position4>
+        <Filename Value="MainUnit.pas"/>
+        <Caret Line="23" Column="17" TopLine="5"/>
+      </Position4>
+      <Position5>
+        <Filename Value="MainUnit.pas"/>
+        <Caret Line="487" Column="2" TopLine="492"/>
+      </Position5>
+      <Position6>
+        <Filename Value="MainUnit.pas"/>
+        <Caret Line="3757" Column="21" TopLine="3783"/>
+      </Position6>
+    </JumpHistory>
     <RunParams>
       <FormatVersion Value="2"/>
       <Modes Count="0" ActiveMode=""/>

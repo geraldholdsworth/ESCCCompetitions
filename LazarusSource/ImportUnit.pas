@@ -1,14 +1,13 @@
 unit ImportUnit;
 
-{$MODE Delphi}
+{$MODE objfpc}{$H+}
 
 interface
 
 uses
-  {Winapi.Windows,Winapi.Messages,System.SysUtils,System.Variants,System.Classes,
-  Vcl.Graphics,Vcl.Controls,Vcl.Forms,Vcl.Dialogs,}Global, ExtCtrls, StdCtrls,
-  Buttons, Grids{, Vcl.Grids,
-  Vcl.ExtCtrls, Vcl.StdCtrls, Vcl.Buttons};
+  SysUtils,Variants,Classes,
+  Graphics,Controls,Forms,Dialogs,Global, ExtCtrls, StdCtrls,
+  Buttons, Grids;
 
 type
   TStringArray = array of String;

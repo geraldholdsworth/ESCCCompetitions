@@ -1,44 +1,43 @@
 object VotingForm: TVotingForm
-  Left = 0
-  Top = 0
+  Left = 921
+  Height = 167
+  Top = 395
+  Width = 502
   BorderIcons = []
   BorderStyle = bsDialog
   Caption = 'Voting Slip'
   ClientHeight = 167
   ClientWidth = 502
   Color = clBtnFace
-  Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
-  Font.Style = []
-  Position = poMainFormCenter
   OnShow = FormShow
-  PixelsPerInch = 96
+  Position = poMainFormCenter
+  LCLVersion = '2.0.12.0'
   object CancelBtn: TBitBtn
     Left = 416
+    Height = 25
     Top = 136
     Width = 75
-    Height = 25
-    Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
     Kind = bkCancel
+    ModalResult = 2
     NumGlyphs = 2
+    OnClick = CancelBtnClick
     ParentFont = False
     TabOrder = 0
-    OnClick = CancelBtnClick
   end
   object OKbtn: TBitBtn
     Left = 335
+    Height = 25
     Top = 136
     Width = 75
-    Height = 25
     Caption = 'OK'
     Default = True
-    Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
     Font.Name = 'Tahoma'
@@ -59,19 +58,19 @@ object VotingForm: TVotingForm
       33333333A222433333333333338F338F00003333333333333A22433333333333
       3338F38F000033333333333333A223333333333333338F830000333333333333
       333A333333333333333338330000333333333333333333333333333333333333
-      0000}
+      0000
+    }
     NumGlyphs = 2
+    OnClick = OKbtnClick
     ParentFont = False
     TabOrder = 1
-    OnClick = OKbtnClick
   end
   object pnl_slipnum: TPanel
     Left = 8
+    Height = 25
     Top = 134
     Width = 75
-    Height = 25
     Caption = '100'
-    Font.Charset = DEFAULT_CHARSET
     Font.Color = clRed
     Font.Height = -11
     Font.Name = 'Tahoma'

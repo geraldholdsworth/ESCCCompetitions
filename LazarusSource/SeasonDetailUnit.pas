@@ -1,6 +1,6 @@
 unit SeasonDetailUnit;
 
-{$MODE Delphi}
+{$MODE objfpc}{$H+}
 
 interface
 

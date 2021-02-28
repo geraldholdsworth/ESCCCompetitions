@@ -3,7 +3,7 @@ program ESCCCompetions;
 {$MODE Delphi}
 
 uses
-  Forms, Interfaces,
+  Forms, printer4lazarus, Interfaces,
   MainUnit in 'MainUnit.pas' {MainForm},
   AboutUnit in 'AboutUnit.pas' {AboutForm},
   VotingUnit in 'VotingUnit.pas' {VotingForm},
@@ -18,8 +18,9 @@ uses
 {$R *.res}
 
 begin
+ Application.Scaled:=True;
   Application.Initialize;
-  Application.Title := 'ESCC Competitions';
+ Application.Title:='ESCC Competitions';
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TAboutForm, AboutForm);
   Application.CreateForm(TVotingForm, VotingForm);

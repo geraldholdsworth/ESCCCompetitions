@@ -1,17 +1,17 @@
 unit ImportOnlineUnit;
 
-{$MODE Delphi}
+{$MODE objfpc}{$H+}
 
 interface
 
-{uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, IdBaseComponent, IdComponent,
-  IdTCPConnection, IdTCPClient, IdHTTP, Vcl.ComCtrls, Vcl.StdCtrls, Vcl.Buttons;}
+uses
+  Messages,SysUtils,Variants,Classes,Graphics,
+  Controls,Forms,Dialogs,{IdBaseComponent, IdComponent,
+  IdTCPConnection, IdTCPClient, IdHTTP,}ComCtrls,StdCtrls,Buttons;
 
 type
   TImportOnlineForm = class(TForm)
-    http_escc: TIdHTTP;
+    {http_escc: TIdHTTP;}
     CompList: TTreeView;
     Label1: TLabel;
     SpeedButton1: TSpeedButton;
@@ -132,7 +132,7 @@ end;
 
 function TImportOnlineForm.GetString(request: String): String;
 begin
- Result:=http_escc.Get(website+'?'+request);
+ //Result:=http_escc.Get(website+'?'+request);
 end;
 
 function TImportOnlineForm.GetInteger(request: String): Integer;

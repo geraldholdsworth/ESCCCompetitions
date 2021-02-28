@@ -1,6 +1,6 @@
 unit ResultsUnit;
 
-{$MODE Delphi}
+{$MODE objfpc}{$H+}
 
 interface
 

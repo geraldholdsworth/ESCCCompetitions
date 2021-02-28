@@ -1,27 +1,26 @@
 object ResultsForm: TResultsForm
-  Left = 0
-  Top = 0
+  Left = 924
+  Height = 327
+  Top = 138
+  Width = 503
   BorderIcons = []
   BorderStyle = bsDialog
   Caption = 'ResultsForm'
   ClientHeight = 327
   ClientWidth = 503
   Color = clBtnFace
-  Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
-  Font.Style = []
   Position = poMainFormCenter
-  PixelsPerInch = 96
+  LCLVersion = '2.0.12.0'
   object header: TPanel
     Left = 0
+    Height = 33
     Top = 0
     Width = 503
-    Height = 33
     Align = alTop
     Caption = 'Competition Results'
-    Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -21
     Font.Name = 'Tahoma'
@@ -31,30 +30,30 @@ object ResultsForm: TResultsForm
   end
   object pages: TPageControl
     Left = 0
+    Height = 266
     Top = 33
     Width = 503
-    Height = 266
     Align = alClient
     TabOrder = 1
   end
   object Panel1: TPanel
     Left = 0
+    Height = 28
     Top = 299
     Width = 503
-    Height = 28
     Align = alBottom
-    Font.Charset = DEFAULT_CHARSET
+    ClientHeight = 28
+    ClientWidth = 503
     Font.Color = clWindowText
     Font.Height = -11
     Font.Name = 'Tahoma'
-    Font.Style = []
     ParentFont = False
     TabOrder = 2
     object SpeedButton1: TSpeedButton
       Left = 0
+      Height = 25
       Top = 0
       Width = 73
-      Height = 25
       Caption = 'OK'
       Flat = True
       Glyph.Data = {
@@ -73,15 +72,16 @@ object ResultsForm: TResultsForm
         33333333A222433333333333338F338F00003333333333333A22433333333333
         3338F38F000033333333333333A223333333333333338F830000333333333333
         333A333333333333333338330000333333333333333333333333333333333333
-        0000}
+        0000
+      }
       NumGlyphs = 2
       OnClick = BitBtn1Click
     end
     object detail_results_btn: TSpeedButton
       Left = 374
+      Height = 22
       Top = 0
       Width = 23
-      Height = 22
       Glyph.Data = {
         36030000424D3603000000000000360000002800000010000000100000000100
         18000000000000030000120B0000120B00000000000000000000FD02FAFD02FA
@@ -108,7 +108,8 @@ object ResultsForm: TResultsForm
         3F3F000000000000303030606060909090FD02FAFD02FAFD02FAFD02FA606060
         0000000000003F3F3F7F7F7F6F6F6F606060909090FD02FAFD02FAFD02FAFD02
         FAFD02FAFD02FAFD02FAFD02FAFD02FAFD02FAFD02FAFD02FAFD02FAFD02FAFD
-        02FAFD02FAFD02FAFD02FAFD02FAFD02FAFD02FAFD02FAFD02FA}
+        02FAFD02FAFD02FAFD02FAFD02FAFD02FAFD02FAFD02FAFD02FA
+      }
       Visible = False
     end
   end

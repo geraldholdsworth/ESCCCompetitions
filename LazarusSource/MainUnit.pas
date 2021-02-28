@@ -1,6 +1,6 @@
 unit MainUnit;
 
-{$MODE Delphi}
+{$MODE objfpc} {$H+}
 
 {
 ESCC Competitions written and designed by Gerald J Holdsworth
@@ -18,17 +18,19 @@ local storage and use from there.
 
 interface
 
-uses SysUtils, Classes, {VCL.Graphics,} Forms, Controls, StdCtrls, Dialogs,
- Buttons, ExtCtrls, ComCtrls, Global, ImgList, ToolWin, Messages,
- {System.ImageList,} UITypes, {Winapi.Windows, Vcl.Grids, System.Actions,
- Vcl.ActnList,} Printers, LCLIntf, ActnList, Menus, StrUtils, {Vcl.Imaging.pngimage, Vcl.Menus,}
- adpMRU, PrintersDlgs{, IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP};
+uses SysUtils, Classes, Graphics, Forms, Controls, StdCtrls, Dialogs, Buttons,
+ ExtCtrls, ComCtrls, Global, Printers, LCLIntf, ActnList, Menus, PrintersDlgs,
+ StrUtils, Types
+ {adpMRU,IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP};
 
 type
  TMembersArray = array of TMembers;
  TCompetitionArray = array of TCompetitions;
 
 type
+
+  { TMainForm }
+
   TMainForm = class(TForm)
     BigImages: TImageList;
     ToolBar1: TToolBar;
@@ -114,7 +116,7 @@ type
     InsPhotoMenu: TMenuItem;
     DelPhotoMenu: TMenuItem;
     IgnPhotoMenu: TMenuItem;
-    adpMRU1: TadpMRU;
+    //adpMRU1: TadpMRU;
     OpenMenu: TPopupMenu;
     Reopen_file: TMenuItem;
     btn_importonlinecomp: TToolButton;
@@ -154,7 +156,7 @@ type
     procedure DisplayActiveVoteGraph;
     procedure EditorKeyPress(Sender: TObject; var Key: Char);
     procedure EditSeason(Sender: TObject);
-    procedure EnableControls(controls: Integer);
+    procedure EnableControls(lcontrols: Integer);
     procedure FillInPhotoControl(cat,y,x: Integer);
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -186,7 +188,7 @@ type
     procedure print_btnClick(Sender: TObject);
     procedure PrintFooter;
     procedure PrintHeader(title: String;cat: Integer);
-    procedure PrintLine(S,font: String;size,x: Integer;style: TFontStyles);
+    procedure PrintLine(S,lfont: String;size,x: Integer;style: TFontStyles);
     procedure RecalculateResults(comp: Integer);
     procedure RePopulateMembers;
     procedure SaveSeasonFile;
@@ -204,7 +206,7 @@ type
     procedure WebLinkBtnClick(Sender: TObject);
     procedure adpMRU1Click(Sender: TObject; const FileName: string);
   private
-    procedure WMDROPFILES(var msg : TWMDropFiles) ; message WM_DROPFILES;
+//    procedure WMDROPFILES(var msg : TWMDropFiles) ; message WM_DROPFILES;
   public
     //Season details of currently loaded season
     season             : TSeason;
@@ -1258,7 +1260,7 @@ begin
    //and finally sort the members into order
    SortMembers(True);
    //Add to the Most Recently Used list
-   adpMRU1.AddItem(filename);
+   //adpMRU1.AddItem(filename);
   end
   else ShowMessage('File Load Failure');
  end
@@ -1485,8 +1487,8 @@ begin
     if maxID[i]=' ' then maxID[i]:=FillString('Z',photo_maxlength);
     edit_maxphotoID[i].Text:=maxID[i];
     edit_maxphotoID[i].Alignment:=taCenter;
-    edit_maxphotoID[i].OnChange:=VotingForm.Pos_1_1Change;
-    edit_maxphotoID[i].OnExit:=MaxPhotoIDExit;
+    edit_maxphotoID[i].OnChange:=@VotingForm.Pos_1_1Change;
+    edit_maxphotoID[i].OnExit:=@MaxPhotoIDExit;
     edit_maxphotoID[i].MaxLength:=photo_maxlength;
     edit_maxphotoID[i].CharCase:=ecUpperCase;
     edit_maxphotoID[i].Tag:=i;
@@ -1524,7 +1526,7 @@ var
  i: Integer;
 begin
  //Accept files being dragged into application
- DragAcceptFiles(Handle,True);
+ //DragAcceptFiles(Handle,True);
  //Set default values by reading them from the registry
  def_num_categories   :=GetRegValI('Num_categories',c_def_num_categories);
  SetLength(def_categories,def_num_categories+1);
@@ -1549,7 +1551,7 @@ begin
  def_scoretotala      :=GetRegValB('Score_Total_POY',c_def_scoretotala);
  def_splitequal       :=GetRegValB('SplitEquals',c_def_splitequal);
  //Set up most recently used list
- adpMRU1.RegistryPath :=RegKey;
+ //adpMRU1.RegistryPath :=RegKey;
 end;
 
 {-------------------------------------------------------------------------------
@@ -1872,10 +1874,10 @@ begin
  edit_voting[cat,y-1] :=CreateEdit(ColumnPos[5],y*controlheight,ColumnWid[5],true,SB);
  edit_place[cat,y-1]  :=CreateEdit(ColumnPos[6],y*controlheight,ColumnWid[6],true,SB);
  //Setup the event handlers
- panl_ID[cat,y-1].OnClick:=IgnorePhoto;
- edit_title[cat,y-1].OnExit:=season_titleExit;
- edit_title[cat,y-1].OnKeyPress:=EditorKeyPress;
- cbox_author[cat,y-1].OnChange:=season_titleExit;
+ panl_ID[cat,y-1].OnClick:=@IgnorePhoto;
+ edit_title[cat,y-1].OnExit:=@season_titleExit;
+ edit_title[cat,y-1].OnKeyPress:=@EditorKeyPress;
+ cbox_author[cat,y-1].OnChange:=@season_titleExit;
  //Right click menu
  panl_ID[cat,y-1].PopupMenu:=PhotoMenu;
  edit_title[cat,y-1].PopupMenu:=PhotoMenu;
@@ -1885,13 +1887,13 @@ begin
  edit_place[cat,y-1].PopupMenu:=PhotoMenu;
  if competitions[comp].Ext_judge then
  begin
-  edit_score[cat,y-1].OnExit:=season_titleExit;
-  edit_score[cat,y-1].OnKeyPress:=EditorKeyPress;
+  edit_score[cat,y-1].OnExit:=@season_titleExit;
+  edit_score[cat,y-1].OnKeyPress:=@EditorKeyPress;
   edit_score[cat,y-1].ReadOnly:=False;
   edit_score[cat,y-1].NumbersOnly:=True;
   edit_score[cat,y-1].MaxLength:=3;
-  edit_voting[cat,y-1].OnExit:=season_titleExit;
-  edit_voting[cat,y-1].OnKeyPress:=EditorKeyPress;
+  edit_voting[cat,y-1].OnExit:=@season_titleExit;
+  edit_voting[cat,y-1].OnKeyPress:=@EditorKeyPress;
   edit_voting[cat,y-1].ReadOnly:=False;
   edit_voting[cat,y-1].NumbersOnly:=True;
   edit_voting[cat,y-1].MaxLength:=2;
@@ -2612,7 +2614,7 @@ begin
   delvotslip_btn[vslip].Glyph:=OKbtnsrc.Glyph;
   delvotslip_btn[vslip].Hint:=undelvs_hint;
  end;
- delvotslip_btn[vslip].OnClick:=DeleteVoteSlip;
+ delvotslip_btn[vslip].OnClick:=@DeleteVoteSlip;
  for i:=0 to season.m_places_to_score-1 do
  begin
   for cat:=0 to season.Num_categories-1 do
@@ -2631,9 +2633,9 @@ begin
                            false,sb_vslip);
    //Change the attributes
    edit_vslip[vslip,cat,i].Text:=v_slips[j].Places[i];
-   edit_vslip[vslip,cat,i].OnChange:=VotingForm.Pos_1_1Change;
-   edit_vslip[vslip,cat,i].OnExit:=season_titleExit;
-   edit_vslip[vslip,cat,i].OnKeyPress:=EditorKeyPress;
+   edit_vslip[vslip,cat,i].OnChange:=@VotingForm.Pos_1_1Change;
+   edit_vslip[vslip,cat,i].OnExit:=@season_titleExit;
+   edit_vslip[vslip,cat,i].OnKeyPress:=@EditorKeyPress;
    edit_vslip[vslip,cat,i].MaxLength:=photo_maxlength;
    edit_vslip[vslip,cat,i].CharCase:=ecUpperCase;
    edit_vslip[vslip,cat,i].Tag:=j;
@@ -2664,7 +2666,7 @@ end;
 {-------------------------------------------------------------------------------
 Enable/disable controls and setup main form
 -------------------------------------------------------------------------------}
-procedure TMainForm.EnableControls(controls: Integer);
+procedure TMainForm.EnableControls(lcontrols: Integer);
 var
  e: Boolean;
 begin
@@ -2690,7 +2692,7 @@ begin
  sb_CloseSeason.Enabled:=e;
  cat_pages.Visible:=False;
  //Now re-enable those required
- if  ((controls=ec_OpenSeason)or(controls=ec_OpenComp))
+ if  ((lcontrols=ec_OpenSeason)or(lcontrols=ec_OpenComp))
  and (season.Filename<>'') then
  begin
   season_title.Text:=season.Title;
@@ -2703,7 +2705,7 @@ begin
   sb_editseason.Enabled:=True;
   sb_CloseSeason.Enabled:=True;
  end;
- if controls=ec_OpenComp then
+ if lcontrols=ec_OpenComp then
  begin
   btn_results.Enabled:=True;     //Display results on screen
   btn_saveresults.Enabled:=True; //Save results to a file
@@ -2763,13 +2765,13 @@ begin
  delcomp_btn[i].Glyph:=del_btn_src.Glyph;
  delcomp_btn[i].Width:=21;
  delcomp_btn[i].Margin:=0;
- delcomp_btn[i].OnClick:=DeleteCompetitionClick;
+ delcomp_btn[i].OnClick:=@DeleteCompetitionClick;
  delcomp_btn[i].Hint:='Delete Competition';
  //Create, and set up, the 'open competition' button
  open_btn[i]:=CreateSpeedButton(i*ControlHeight,i,sb_complist);
  open_btn[i].Left:=21+21;
  open_btn[i].Glyph:=btn_opencomp.Glyph;
- open_btn[i].OnClick:=OpenCompetition;
+ open_btn[i].OnClick:=@OpenCompetition;
  if i<season.Num_competitions then
   S:=competitions[i].Title
  else
@@ -3258,15 +3260,15 @@ begin
                               pnl_ForenameTitle.Width,false,SB_MembersList);
  edit_forename[x].Text:=members[member].Forename;
  edit_forename[x].Tag:=member;
- edit_forename[x].OnExit:=season_titleExit;
- edit_forename[x].OnKeyPress:=EditorKeyPress;
+ edit_forename[x].OnExit:=@season_titleExit;
+ edit_forename[x].OnKeyPress:=@EditorKeyPress;
  edit_surname[x]:=CreateEdit(pnl_SurnameTitle.Left,
                              add_btn_src.Top,
                              pnl_SurnameTitle.Left,false,SB_MembersList);
  edit_surname[x].Text:=members[member].Surname;
  edit_surname[x].Tag:=member;
- edit_surname[x].OnExit:=season_titleExit;
- edit_surname[x].OnKeyPress:=EditorKeyPress;
+ edit_surname[x].OnExit:=@season_titleExit;
+ edit_surname[x].OnKeyPress:=@EditorKeyPress;
  members[member].Num_photos:=0;
  edit_photocount[x]:=CreateEdit(pnl_PhotosTitle.Left,
                                 add_btn_src.Top,
@@ -3277,7 +3279,7 @@ begin
  SB_deletemember[x]:=CreateSpeedButton(edit_surname[x].Top,member,SB_MembersList);
  SB_deletemember[x].Left:=pnl_PhotosTitle.Left+pnl_PhotosTitle.Width;
  SB_deletemember[x].Glyph:=del_btn_src.Glyph;
- SB_deletemember[x].OnClick:=DeleteMember;
+ SB_deletemember[x].OnClick:=@DeleteMember;
  If members[member].Num_photos>0 then
   SB_deletemember[x].Enabled:=false
  else
@@ -3296,7 +3298,7 @@ end;
 {-------------------------------------------------------------------------------
 Accept files via drag and drop
 -------------------------------------------------------------------------------}
-procedure TMainForm.WMDROPFILES(var msg: TWMDropFiles) ;
+{procedure TMainForm.WMDROPFILES(var msg: TWMDropFiles) ;
 const
  MAXFILENAME = 255;
 var
@@ -3310,7 +3312,7 @@ begin
   if extractExtension(fileName)='.escc' then LoadSeason(fileName);
  end;
  DragFinish(msg.Drop);
-end;
+end;}
 
 {-------------------------------------------------------------------------------
 Count number of photographs per author
@@ -3643,7 +3645,7 @@ end;
 {-------------------------------------------------------------------------------
 Print some text to the printer, and move the cursor down
 -------------------------------------------------------------------------------}
-procedure TMainForm.PrintLine(S,font: String;size,x: Integer;style: TFontStyles);
+procedure TMainForm.PrintLine(S,lfont: String;size,x: Integer;style: TFontStyles);
 var
  S2: String;
  tw: Integer;
@@ -3651,7 +3653,7 @@ var
 begin
  S2:='';
  Printer.Canvas.Brush.Style:=bsClear;
- Printer.Canvas.Font.Name:=font;
+ Printer.Canvas.Font.Name:=lfont;
  Printer.Canvas.Font.Size:=size;
  Printer.Canvas.Font.Style:=style;
  if x=-1 then centre:=True else centre:=False;
@@ -4167,7 +4169,7 @@ begin
          SetLength(buttons[cat],i+1);
          buttons[cat,i]:=CreateSpeedButton(i*20,j,SB);
          buttons[cat,i].Glyph:=ResultsForm.detail_results_btn.Glyph;
-         buttons[cat,i].OnClick:=ShowTally;
+         buttons[cat,i].OnClick:=@ShowTally;
         end;
        //Create the label and increase the counter
        SetLength(labels[cat],i+1);

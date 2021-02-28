@@ -4,17 +4,25 @@
     <Version Value="11"/>
     <General>
       <Flags>
-        <MainUnitHasUsesSectionForAllUnits Value="False"/>
-        <MainUnitHasCreateFormStatements Value="False"/>
-        <MainUnitHasTitleStatement Value="False"/>
-        <MainUnitHasScaledStatement Value="False"/>
+        <UseDefaultCompilerOptions Value="True"/>
       </Flags>
       <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
-      <Title Value="ESCCCompetions"/>
-      <UseAppBundle Value="False"/>
+      <Title Value="ESCC Competitions"/>
+      <Scaled Value="True"/>
       <ResourceType Value="res"/>
+      <UseXPManifest Value="True"/>
+      <XPManifest>
+        <DpiAware Value="True"/>
+      </XPManifest>
+      <Icon Value="0"/>
     </General>
+    <VersionInfo>
+      <UseVersionInfo Value="True"/>
+      <MinorVersionNr Value="20"/>
+      <Language Value="0809"/>
+      <StringTable CompanyName="East Sutherland Camera Club"/>
+    </VersionInfo>
     <BuildModes Count="6">
       <Item1 Name="Default" Default="True"/>
       <Item2 Name="Debug">
@@ -184,7 +192,7 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="12">
+    <Units Count="11">
       <Unit0>
         <Filename Value="ESCCCompetions.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -192,27 +200,37 @@
       <Unit1>
         <Filename Value="MainUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="MainForm"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
       </Unit1>
       <Unit2>
         <Filename Value="AboutUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="AboutForm"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
       </Unit2>
       <Unit3>
         <Filename Value="VotingUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="VotingForm"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
       </Unit3>
       <Unit4>
         <Filename Value="SeasonDetailUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="SeasonDetailForm"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
       </Unit4>
       <Unit5>
         <Filename Value="ResultsUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="ResultsForm"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
       </Unit5>
       <Unit6>
         <Filename Value="Global.pas"/>
@@ -221,27 +239,31 @@
       <Unit7>
         <Filename Value="ImportUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="ImportForm"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
       </Unit7>
       <Unit8>
         <Filename Value="SettingsUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="SettingsForm"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
       </Unit8>
       <Unit9>
         <Filename Value="DetailSelectionUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="DetailSelectionForm"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
       </Unit9>
       <Unit10>
         <Filename Value="ImportOnlineUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="ImportOnlineForm"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
       </Unit10>
-      <Unit11>
-        <Filename Value="adpMRU.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit11>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

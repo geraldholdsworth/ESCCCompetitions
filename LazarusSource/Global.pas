@@ -1,11 +1,11 @@
 unit Global;
 
-{$MODE Delphi}
+{$MODE objfpc}{$H+}
 
 interface
 
-uses StdCtrls,Controls,Classes,ExtCtrls,Forms,Buttons,ComCtrls,LCLIntf, LCLType, LMessages,SysUtils,
-{System.IOUtils,}Registry,Dialogs,Math;
+uses StdCtrls,Controls,Classes,ExtCtrls,Forms,Buttons,ComCtrls,LCLIntf, LCLType,SysUtils,
+Registry,Dialogs;
 
 type
   TSeason       = Record //Season details
@@ -216,8 +216,8 @@ begin
  Result.Width:=w;
  Result.Height:=MainForm.controlheight;
  Result.ReadOnly:=readonly;
- Result.OnEnter:=MainForm.comp_titleEnter;
- Result.OnClick:=MainForm.comp_titleEnter;
+ Result.OnEnter:=@MainForm.comp_titleEnter;
+ Result.OnClick:=@MainForm.comp_titleEnter;
 end;
 
 {-------------------------------------------------------------------------------
@@ -315,7 +315,7 @@ begin
   Result.Height:=16;
   Result.Picture:=MainForm.pic_judge.Picture;
   Result.Transparent:=True;
-  Result.OnClick:=MainForm.pic_judgeClick;
+  Result.OnClick:=@MainForm.pic_judgeClick;
   Result.Visible:=true;
   Result.Hint:='Change to External Judging';
 end;
@@ -478,7 +478,7 @@ begin
  for i:=1 to Length(S) do
  begin
   X:=S[i];
-  if not TPath.IsValidFileNameChar(X) then X:=' ';
+//  if not TPath.IsValidFileNameChar(X) then X:=' ';
   Result:=Result+X;
  end;
 end;
@@ -756,7 +756,7 @@ var
  Dlgbutton   : Tbutton;
  Captionindex: Integer;
 begin
- aMsgdlg:=createMessageDialog(Msg,DlgTypt,button,default);
+{ aMsgdlg:=createMessageDialog(Msg,DlgTypt,button,default);
  aMsgdlg.Caption:=dlgcaption;
  Captionindex:=0;
  x:=Length(Caption);
@@ -775,7 +775,7 @@ begin
    inc(Captionindex);
   end;
  end;
- Result:=aMsgdlg.Showmodal;
+ Result:=aMsgdlg.Showmodal;}
 end;
 
 {-------------------------------------------------------------------------------

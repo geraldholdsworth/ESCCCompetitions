@@ -1,6 +1,6 @@
 unit VotingUnit;
 
-{$MODE Delphi}
+{$MODE objfpc}{$H+}
 
 interface
 
@@ -130,7 +130,7 @@ begin
    inc(k);
    //Edit boxes used for entering the votes
    Positions[i,j]:=CreateEdit(63+(165*i),48+(22*j),49,false,self);
-   Positions[i,j].OnChange:=Pos_1_1Change;
+   Positions[i,j].OnChange:=@Pos_1_1Change;
    Positions[i,j].MaxLength:=MainForm.photo_maxlength;
    Positions[i,j].CharCase:=ecUpperCase;
    Positions[i,j].Alignment:=taCenter;

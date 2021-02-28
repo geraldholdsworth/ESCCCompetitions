@@ -1,0 +1,152 @@
+object AboutForm: TAboutForm
+  Left = 445
+  Height = 225
+  Top = 127
+  Width = 675
+  BorderIcons = []
+  BorderStyle = bsNone
+  ClientHeight = 225
+  ClientWidth = 675
+  Color = clBtnFace
+  Font.Color = clBlack
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  OnClick = FormClick
+  Position = poScreenCenter
+  LCLVersion = '2.0.12.0'
+  object Panel1: TPanel
+    Left = 0
+    Height = 225
+    Top = 0
+    Width = 675
+    Align = alClient
+    BevelInner = bvLowered
+    BevelWidth = 5
+    ClientHeight = 225
+    ClientWidth = 675
+    Font.Color = clBlack
+    Font.Height = -11
+    Font.Name = 'Arial'
+    ParentFont = False
+    TabOrder = 0
+    OnClick = FormClick
+    object ProgramIcon: TImage
+      Left = 14
+      Height = 137
+      Top = 14
+      Width = 265
+      OnClick = FormClick
+      ParentShowHint = False
+      Proportional = True
+      ShowHint = True
+    end
+    object ProductName: TLabel
+      Left = 285
+      Height = 41
+      Top = 18
+      Width = 362
+      Alignment = taCenter
+      AutoSize = False
+      Caption = 'ESCC Competitions'
+      Font.Color = clBlack
+      Font.Height = -32
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+      OnClick = FormClick
+    end
+    object Version: TLabel
+      Left = 285
+      Height = 13
+      Top = 65
+      Width = 243
+      Alignment = taCenter
+      AutoSize = False
+      Caption = 'Development version'
+      Font.Color = clBlack
+      Font.Height = -11
+      Font.Name = 'MS Sans Serif'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+      OnClick = FormClick
+    end
+    object Copyright: TLabel
+      Left = 14
+      Height = 26
+      Top = 157
+      Width = 633
+      Alignment = taCenter
+      AutoSize = False
+      Caption = '©2020 Gerald J Holdsworth and East Sutherland Camera Club'
+      Font.Color = clBlack
+      Font.Height = -21
+      Font.Name = 'MS Sans Serif'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+      WordWrap = True
+      OnClick = FormClick
+    end
+    object Label1: TLabel
+      Left = 285
+      Height = 13
+      Top = 95
+      Width = 243
+      Alignment = taCenter
+      AutoSize = False
+      Caption = 'written by Gerald J Holdsworth'
+      Font.Color = clBlack
+      Font.Height = -11
+      Font.Name = 'MS Sans Serif'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+      OnClick = FormClick
+    end
+    object Label2: TLabel
+      Left = 285
+      Height = 29
+      Top = 110
+      Width = 243
+      Alignment = taCenter
+      AutoSize = False
+      Caption = 'graphics by Andy Kirby and Gerald J Holdsworth'
+      Font.Color = clBlack
+      Font.Height = -11
+      Font.Name = 'MS Sans Serif'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+      WordWrap = True
+      OnClick = FormClick
+    end
+    object Image1: TImage
+      Left = 534
+      Height = 121
+      Top = 46
+      Width = 121
+      Proportional = True
+      Transparent = True
+    end
+    object Label3: TLabel
+      Cursor = crHandPoint
+      Left = 14
+      Height = 26
+      Top = 181
+      Width = 633
+      Alignment = taCenter
+      AutoSize = False
+      Caption = 'http://www.eastsutherlandcc.org.uk'
+      Font.Color = clBlack
+      Font.Height = -21
+      Font.Name = 'MS Sans Serif'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+      WordWrap = True
+      OnClick = Label3Click
+    end
+  end
+end
