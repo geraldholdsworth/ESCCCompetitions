@@ -6,7 +6,7 @@ interface
 
 uses
   SysUtils,Controls,Forms,Dialogs,StdCtrls,Buttons,ExtCtrls,StrUtils,Global,
-  Classes,UITypes,Graphics;
+  Classes,Graphics;
 
 type
   TVotingForm = class(TForm)

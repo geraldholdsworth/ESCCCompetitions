@@ -4,8 +4,7 @@ unit AboutUnit;
 
 interface
 
-uses Forms,StdCtrls,ExtCtrls,Controls,Classes,{Vcl.Imaging.pngimage,}
-Dialogs,SysUtils;
+uses Forms,StdCtrls,ExtCtrls,Controls;
 
 type
   TAboutForm = class(TForm)
@@ -33,7 +32,7 @@ implementation
 
 {$R *.lfm}
 
-uses MainUnit,Global;
+uses MainUnit;
 
 procedure TAboutForm.FormClick(Sender: TObject);
 begin

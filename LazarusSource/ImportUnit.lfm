@@ -8,7 +8,7 @@ object ImportForm: TImportForm
   Caption = 'Import CSV File'
   ClientHeight = 320
   ClientWidth = 541
-  Color = clBtnFace
+  Color = 15527148
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
@@ -33,11 +33,12 @@ object ImportForm: TImportForm
       ParentColor = False
     end
     object SpeedButton1: TSpeedButton
-      Left = 376
+      Left = 368
       Height = 22
       Top = 5
-      Width = 73
+      Width = 81
       Caption = 'Import File'
+      Color = 15527148
       Flat = True
       Glyph.Data = {
         76010000424D7601000000000000760000002800000020000000100000000100
@@ -62,6 +63,7 @@ object ImportForm: TImportForm
       Top = 5
       Width = 74
       Caption = 'Discard File'
+      Color = 15527148
       Flat = True
       Glyph.Data = {
         76010000424D7601000000000000760000002800000020000000100000000100
@@ -85,6 +87,7 @@ object ImportForm: TImportForm
       Height = 20
       Top = 5
       Width = 101
+      Color = 15527148
       ItemHeight = 26
       ItemIndex = 0
       Items.Strings = (
@@ -115,7 +118,9 @@ object ImportForm: TImportForm
     Top = 33
     Width = 541
     Align = alClient
+    Color = 15527148
     DefaultColWidth = 128
+    FixedColor = 15526912
     FixedCols = 0
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goColSizing]
     TabOrder = 1

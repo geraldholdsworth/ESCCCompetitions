@@ -8,7 +8,7 @@ object VotingForm: TVotingForm
   Caption = 'Voting Slip'
   ClientHeight = 167
   ClientWidth = 502
-  Color = clBtnFace
+  Color = 15527148
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
@@ -20,15 +20,12 @@ object VotingForm: TVotingForm
     Height = 25
     Top = 136
     Width = 75
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'Tahoma'
-    Font.Style = [fsBold]
+    Caption = 'Cancel'
+    Color = 15527148
     Kind = bkCancel
     ModalResult = 2
     NumGlyphs = 2
     OnClick = CancelBtnClick
-    ParentFont = False
     TabOrder = 0
   end
   object OKbtn: TBitBtn
@@ -37,11 +34,8 @@ object VotingForm: TVotingForm
     Top = 136
     Width = 75
     Caption = 'OK'
+    Color = 15527148
     Default = True
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'Tahoma'
-    Font.Style = [fsBold]
     Glyph.Data = {
       DE010000424DDE01000000000000760000002800000024000000120000000100
       0400000000006801000000000000000000001000000000000000000000000000
@@ -62,7 +56,6 @@ object VotingForm: TVotingForm
     }
     NumGlyphs = 2
     OnClick = OKbtnClick
-    ParentFont = False
     TabOrder = 1
   end
   object pnl_slipnum: TPanel

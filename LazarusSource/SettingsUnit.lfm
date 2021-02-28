@@ -8,7 +8,7 @@ object SettingsForm: TSettingsForm
   Caption = 'Preferences'
   ClientHeight = 300
   ClientWidth = 256
-  Color = clBtnFace
+  Color = 15527148
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
@@ -30,6 +30,8 @@ object SettingsForm: TSettingsForm
       Height = 25
       Top = 6
       Width = 75
+      Caption = 'OK'
+      Color = 15527148
       Kind = bkOK
       ModalResult = 1
       NumGlyphs = 2
@@ -41,6 +43,8 @@ object SettingsForm: TSettingsForm
       Height = 25
       Top = 6
       Width = 75
+      Caption = 'Cancel'
+      Color = 15527148
       Kind = bkCancel
       ModalResult = 2
       NumGlyphs = 2
@@ -62,14 +66,14 @@ object SettingsForm: TSettingsForm
       Top = 1
       Width = 254
       Align = alTop
-      Caption = 'Details to include when printing or saving results'
+      Caption = 'Details to include when printing/saving'
       ClientHeight = 98
       ClientWidth = 246
       TabOrder = 0
       object cb_ID: TCheckBox
         Left = 8
         Height = 18
-        Top = 16
+        Top = 0
         Width = 109
         Caption = 'ID (monthly only)'
         Font.Color = clWindowText
@@ -81,7 +85,7 @@ object SettingsForm: TSettingsForm
       object cb_Title: TCheckBox
         Left = 8
         Height = 18
-        Top = 32
+        Top = 16
         Width = 118
         Caption = 'Title (monthly only)'
         Font.Color = clWindowText
@@ -93,7 +97,7 @@ object SettingsForm: TSettingsForm
       object cb_Author: TCheckBox
         Left = 8
         Height = 18
-        Top = 48
+        Top = 32
         Width = 129
         Caption = 'Author (monthly only)'
         Font.Color = clWindowText
@@ -105,7 +109,7 @@ object SettingsForm: TSettingsForm
       object cb_Position: TCheckBox
         Left = 8
         Height = 18
-        Top = 64
+        Top = 48
         Width = 135
         Caption = 'Position (monthly only)'
         Font.Color = clWindowText
@@ -117,7 +121,7 @@ object SettingsForm: TSettingsForm
       object cb_Tally_m: TCheckBox
         Left = 8
         Height = 18
-        Top = 80
+        Top = 64
         Width = 136
         Caption = 'Position Tally (monthly)'
         Font.Color = clWindowText
@@ -129,7 +133,7 @@ object SettingsForm: TSettingsForm
       object cb_Tally_a: TCheckBox
         Left = 8
         Height = 18
-        Top = 96
+        Top = 80
         Width = 119
         Caption = 'Position Tally (PotY)'
         Font.Color = clWindowText
@@ -172,11 +176,15 @@ object SettingsForm: TSettingsForm
       Caption = 'Format when printing'
       ClientHeight = 58
       ClientWidth = 246
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      ParentFont = False
       TabOrder = 2
       object Label1: TLabel
         Left = 8
         Height = 13
-        Top = 52
+        Top = 36
         Width = 125
         Caption = 'In PotY, only print the top'
         ParentColor = False
@@ -184,7 +192,7 @@ object SettingsForm: TSettingsForm
       object cb_Tabulate_m: TCheckBox
         Left = 8
         Height = 18
-        Top = 16
+        Top = 0
         Width = 152
         Caption = 'Tabulate Results (monthly)'
         Enabled = False
@@ -193,7 +201,7 @@ object SettingsForm: TSettingsForm
       object cb_Tabulate_a: TCheckBox
         Left = 8
         Height = 18
-        Top = 32
+        Top = 16
         Width = 135
         Caption = 'Tabulate Results (PotY)'
         Enabled = False
@@ -202,16 +210,16 @@ object SettingsForm: TSettingsForm
       object ed_Top_a: TEdit
         Left = 136
         Height = 22
-        Top = 47
-        Width = 17
+        Top = 31
+        Width = 27
         ReadOnly = True
         TabOrder = 3
         Text = '10'
       end
       object ud_Top_a: TUpDown
-        Left = 153
+        Left = 163
         Height = 22
-        Top = 47
+        Top = 31
         Width = 16
         Associate = ed_Top_a
         Max = 99

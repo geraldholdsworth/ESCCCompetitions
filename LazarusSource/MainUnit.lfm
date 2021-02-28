@@ -1,8 +1,9 @@
 object MainForm: TMainForm
   Left = 176
   Height = 664
-  Top = 153
+  Top = 104
   Width = 1264
+  AllowDropFiles = True
   Caption = 'ESCC Competitions'
   ClientHeight = 664
   ClientWidth = 1264
@@ -11,6 +12,7 @@ object MainForm: TMainForm
   Font.Height = -11
   Font.Name = 'Arial'
   OnCreate = FormCreate
+  OnDropFiles = FormDropFiles
   OnShow = FormShow
   Position = poDesktopCenter
   ShowHint = True
@@ -31815,20 +31817,18 @@ object MainForm: TMainForm
       Left = 47
       Hint = 'Open Season (Ctrl+O)'
       Top = 2
-      DropdownMenu = OpenMenu
       ImageIndex = 5
       OnClick = OpenSeasonClick
-      Style = tbsDropDown
     end
     object sb_editseason: TToolButton
-      Left = 105
+      Left = 93
       Hint = 'Edit Season (Ctrl+E)'
       Top = 2
       ImageIndex = 2
       OnClick = EditSeason
     end
     object LoadMembers: TToolButton
-      Left = 151
+      Left = 139
       Hint = 'Load Member List (Ctrl+M)'
       Top = 2
       Enabled = False
@@ -31836,7 +31836,7 @@ object MainForm: TMainForm
       OnClick = ImportMembers
     end
     object ToolButton2: TToolButton
-      Left = 197
+      Left = 185
       Height = 38
       Top = 2
       Caption = 'ToolButton2'
@@ -31845,7 +31845,7 @@ object MainForm: TMainForm
       Style = tbsSeparator
     end
     object btn_a_results: TToolButton
-      Left = 205
+      Left = 193
       Hint = 'Display Photographers Of The Year (Shift+Ctrl+A)'
       Top = 2
       Enabled = False
@@ -31853,7 +31853,7 @@ object MainForm: TMainForm
       OnClick = btn_a_resultsClick
     end
     object btn_prt_a_results: TToolButton
-      Left = 251
+      Left = 239
       Hint = 'Print Photographers Of The Year (Shift+Ctrl+Q)'
       Top = 2
       Enabled = False
@@ -31861,7 +31861,7 @@ object MainForm: TMainForm
       OnClick = btn_prt_a_resultsClick
     end
     object btn_save_a_results: TToolButton
-      Left = 297
+      Left = 285
       Hint = 'Save Photographers Of The Year (Shift+Ctrl+Z)'
       Top = 2
       Enabled = False
@@ -31869,7 +31869,7 @@ object MainForm: TMainForm
       OnClick = btn_save_a_resultsClick
     end
     object ToolButton1: TToolButton
-      Left = 343
+      Left = 331
       Height = 38
       Top = 2
       Caption = 'ToolButton1'
@@ -31878,7 +31878,7 @@ object MainForm: TMainForm
       Style = tbsSeparator
     end
     object btn_importphotos: TToolButton
-      Left = 351
+      Left = 339
       Hint = 'Import Photographs from CSV (Shift+Ctrl+I)'
       Top = 2
       Enabled = False
@@ -31886,7 +31886,7 @@ object MainForm: TMainForm
       OnClick = ImportPhotos
     end
     object btn_votingslip: TToolButton
-      Left = 397
+      Left = 385
       Hint = 'Add New Voting Slip (Shift+Ctrl+N)'
       Top = 2
       Enabled = False
@@ -31894,7 +31894,7 @@ object MainForm: TMainForm
       OnClick = btn_votingslipClick
     end
     object btn_importonlinecomp: TToolButton
-      Left = 443
+      Left = 431
       Hint = 'Import Online Competition'
       Top = 2
       Enabled = False
@@ -31902,42 +31902,42 @@ object MainForm: TMainForm
       OnClick = ImportOnlineComp
     end
     object btn_delphotographs: TToolButton
-      Left = 489
+      Left = 477
       Hint = 'Delete Redundant Photographs (Shift+Ctrl+Del)'
       Top = 2
       ImageIndex = 9
       OnClick = DeleteRedundantPhotographs
     end
     object btn_recalculate: TToolButton
-      Left = 535
+      Left = 523
       Hint = 'Recalculate Positions (Shift+Ctrl+R)'
       Top = 2
       ImageIndex = 3
       OnClick = btn_recalculateClick
     end
     object btn_results: TToolButton
-      Left = 581
+      Left = 569
       Hint = 'Display Competition Results (Shift+Ctrl+C)'
       Top = 2
       ImageIndex = 15
       OnClick = btn_resultsClick
     end
     object print_btn: TToolButton
-      Left = 627
+      Left = 615
       Hint = 'Print Competition Results (Shift+Ctrl+P)'
       Top = 2
       ImageIndex = 16
       OnClick = print_btnClick
     end
     object btn_saveresults: TToolButton
-      Left = 673
+      Left = 661
       Hint = 'Save Competition Results (Shift+Ctrl+S)'
       Top = 2
       ImageIndex = 13
       OnClick = btn_saveresultsClick
     end
     object ToolButton3: TToolButton
-      Left = 719
+      Left = 707
       Height = 38
       Top = 2
       Caption = 'ToolButton3'
@@ -31945,21 +31945,21 @@ object MainForm: TMainForm
       Style = tbsSeparator
     end
     object settings_btn: TToolButton
-      Left = 727
+      Left = 715
       Hint = 'Settings (Ctrl+P)'
       Top = 2
       ImageIndex = 4
       OnClick = settings_btnClick
     end
     object WebLinkBtn: TToolButton
-      Left = 773
+      Left = 761
       Hint = 'Goto ESCC Website (Shift+Ctrl+W)'
       Top = 2
       ImageIndex = 1
       OnClick = WebLinkBtnClick
     end
     object AboutButton: TToolButton
-      Left = 819
+      Left = 807
       Hint = 'About (F1)'
       Top = 2
       ImageIndex = 6
@@ -32110,11 +32110,11 @@ object MainForm: TMainForm
       Align = alTop
       Alignment = taCenter
       AutoSize = False
+      BorderSpacing.CellAlignHorizontal = ccaRightBottom
+      BorderSpacing.CellAlignVertical = ccaRightBottom
       BorderStyle = bsNone
       Font.Color = clBlack
       Font.Height = -21
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
       HideSelection = False
       OnClick = comp_titleEnter
       OnEnter = comp_titleEnter
@@ -32393,17 +32393,16 @@ object MainForm: TMainForm
     TabOrder = 2
     object comp_title: TEdit
       Left = 0
-      Height = 30
+      Height = 23
       Top = 0
       Width = 365
       Align = alTop
       Alignment = taCenter
+      AutoSize = False
       BorderStyle = bsNone
-      Color = clBtnFace
+      Color = 15527148
       Font.Color = clBlack
       Font.Height = -21
-      Font.Name = 'Default'
-      Font.Style = [fsBold]
       OnClick = comp_titleEnter
       OnEnter = comp_titleEnter
       OnExit = season_titleExit
@@ -32416,10 +32415,10 @@ object MainForm: TMainForm
     object comp_date: TComboBox
       Left = 0
       Height = 20
-      Top = 30
+      Top = 23
       Width = 365
       Align = alTop
-      Color = clBtnFace
+      Color = 15527148
       Font.Color = clBlack
       Font.Height = -13
       Font.Name = 'Default'
@@ -32434,8 +32433,8 @@ object MainForm: TMainForm
     end
     object cat_pages: TPageControl
       Left = 0
-      Height = 574
-      Top = 50
+      Height = 581
+      Top = 43
       Width = 365
       Align = alClient
       TabOrder = 2
@@ -35120,13 +35119,6 @@ object MainForm: TMainForm
     object IgnPhotoMenu: TMenuItem
       Caption = 'I&gnore Photograph'
       OnClick = IgnPhotoMenuClick
-    end
-  end
-  object OpenMenu: TPopupMenu
-    Left = 1124
-    Top = 356
-    object Reopen_file: TMenuItem
-      Caption = '&Reopen'
     end
   end
 end

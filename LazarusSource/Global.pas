@@ -4,8 +4,9 @@ unit Global;
 
 interface
 
-uses StdCtrls,Controls,Classes,ExtCtrls,Forms,Buttons,ComCtrls,LCLIntf, LCLType,SysUtils,
-Registry,Dialogs;
+uses
+ StdCtrls,Controls,Classes,ExtCtrls,Forms,Buttons,ComCtrls,SysUtils,Registry,
+ Dialogs;
 
 type
   TSeason       = Record //Season details
@@ -131,8 +132,8 @@ var
 
 const
  //Date application was last updated
- AppDate                                 = '17th January 2020';
- AppVersion                              = '0.15';
+ AppDate                                 = '28th February 2021';
+ AppVersion                              = '0.20';
  //List of months
  MonthList: array[1..13] of String       = ('January',
                                             'February',

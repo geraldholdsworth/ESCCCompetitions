@@ -5,9 +5,7 @@ unit DetailSelectionUnit;
 interface
 
 uses
-  Messages,SysUtils,Variants,Classes,Graphics,
-  Controls,Forms,Dialogs,StdCtrls,Buttons,ExtCtrls,
-  ComCtrls;
+  SysUtils,Classes,Graphics,Controls,Forms,StdCtrls,Buttons,ExtCtrls,ComCtrls;
 
 type
   TDetailSelectionForm = class(TForm)

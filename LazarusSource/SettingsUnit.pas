@@ -5,9 +5,7 @@ unit SettingsUnit;
 interface
 
 uses
-  SysUtils,Variants,Classes,
-  Graphics,Controls,Forms,Dialogs,Global,StdCtrls,
-  Buttons,ExtCtrls,ComCtrls;
+  SysUtils,Classes,Controls,Forms,Global,StdCtrls,Buttons,ExtCtrls,ComCtrls;
 
 type
   TSettingsForm = class(TForm)

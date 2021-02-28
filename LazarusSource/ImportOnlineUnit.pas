@@ -5,13 +5,10 @@ unit ImportOnlineUnit;
 interface
 
 uses
-  Messages,SysUtils,Variants,Classes,Graphics,
-  Controls,Forms,Dialogs,{IdBaseComponent, IdComponent,
-  IdTCPConnection, IdTCPClient, IdHTTP,}ComCtrls,StdCtrls,Buttons;
+  SysUtils,Controls,Forms,ComCtrls,StdCtrls,Buttons,fphttpclient;
 
 type
   TImportOnlineForm = class(TForm)
-    {http_escc: TIdHTTP;}
     CompList: TTreeView;
     Label1: TLabel;
     SpeedButton1: TSpeedButton;
@@ -69,8 +66,8 @@ begin
   begin
    lb_seasonname.Caption:=Node.Parent.Text;
    lb_compname.Caption  :=Node.Text;
-   comp:=Node.Index;
-   season:=Node.Parent.Index;
+   comp:=Node.Index+1;
+   season:=Node.Parent.Index+1;
    votes:=GetInteger('request=no_votes'+
                      '&comp_no='+IntToStr(comp)+
                      '&season_no='+IntToStr(season));
@@ -108,7 +105,7 @@ begin
  if numseasons>0 then
  begin
   //Iterate through them
-  for season:=0 to numseasons-1 do
+  for season:=1 to numseasons do
   begin
    //Get the season names
    Node:=CompList.Items.AddChild(nil,GetString('request=season_name'+
@@ -120,7 +117,7 @@ begin
    if numcomps>0 then
    begin
     //Iterate through them
-    for comp:=0 to numcomps-1 do
+    for comp:=1 to numcomps do
      CompList.Items.AddChild(Node,GetString('request=comp_name'+
                                             '&comp_no='+IntToStr(comp)+
                                             '&season_no='+IntToStr(season)));
@@ -131,8 +128,20 @@ begin
 end;
 
 function TImportOnlineForm.GetString(request: String): String;
+var
+ URL: String;
 begin
- //Result:=http_escc.Get(website+'?'+request);
+ URL:=website+'?'+request;
+ Result := '';
+ With TFPHttpClient.Create(Nil) do
+ try
+  try
+   Result := Get(URL);
+  except
+  end;
+ finally
+  Free;
+ end;
 end;
 
 function TImportOnlineForm.GetInteger(request: String): Integer;
@@ -169,9 +178,9 @@ begin
   SetLength(Photographs,num_cats);
   SetLength(Authors,num_cats);
   //Get the category names
-  for cat:=0 to num_cats-1 do
+  for cat:=1 to num_cats do
   begin
-   Categories[cat]:=GetString('request=cat_name'+
+   Categories[cat-1]:=GetString('request=cat_name'+
                               '&cat_no='+IntToStr(cat)+
                               '&season_no='+IntToStr(SelectedSeason)+
                               '&comp_no='+IntToStr(SelectedCompetition));
@@ -180,19 +189,19 @@ begin
                           '&cat_no='+IntToStr(cat)+
                           '&season_no='+IntToStr(SelectedSeason)+
                           '&comp_no='+IntToStr(SelectedCompetition));
-   SetLength(Photographs[cat],num_photos);
+   SetLength(Photographs[cat-1],num_photos);
    //Fill the array with the author details
-   SetLength(Authors[cat],num_photos);
+   SetLength(Authors[cat-1],num_photos);
    if num_photos>0 then
-    for photo:=0 to num_photos-1 do
+    for photo:=1 to num_photos do
     begin
-     Photographs[cat,photo]:=
+     Photographs[cat-1,photo-1]:=
                            GetString('request=photo_title'+
                                      '&photo_no='+IntToStr(photo)+
                                      '&cat_no='+IntToStr(cat)+
                                      '&season_no='+IntToStr(SelectedSeason)+
                                      '&comp_no='+IntToStr(SelectedCompetition));
-     Authors[cat,photo]:=GetString('request=author'+
+     Authors[cat-1,photo-1]:=GetString('request=author'+
                                    '&photo_no='+IntToStr(photo)+
                                    '&cat_no='+IntToStr(cat)+
                                    '&season_no='+IntToStr(SelectedSeason)+
@@ -206,8 +215,8 @@ begin
   if num_votes>0 then
   begin
    SetLength(VoteSlips,num_votes);
-   for vote:=0 to num_votes-1 do
-    VoteSlips[vote]:=GetString('request=vote'+
+   for vote:=1 to num_votes do
+    VoteSlips[vote-1]:=GetString('request=vote'+
                                '&vote_no='+IntToStr(vote)+
                                '&season_no='+IntToStr(SelectedSeason)+
                                '&comp_no='+IntToStr(SelectedCompetition));

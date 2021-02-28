@@ -4,7 +4,7 @@ unit MainUnit;
 
 {
 ESCC Competitions written and designed by Gerald J Holdsworth
-(C)2015-2020 Gerald J Holdsworth & East Sutherland Camera Club
+(C)2015-2021 Gerald J Holdsworth & East Sutherland Camera Club
 Graphics by Gerald J Holdsworth & Andy Kirby
 http://www.eastsutherlandcc.org.uk
 http://www.geraldholdsworth.co.uk
@@ -18,10 +18,9 @@ local storage and use from there.
 
 interface
 
-uses SysUtils, Classes, Graphics, Forms, Controls, StdCtrls, Dialogs, Buttons,
- ExtCtrls, ComCtrls, Global, Printers, LCLIntf, ActnList, Menus, PrintersDlgs,
- StrUtils, Types
- {adpMRU,IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP};
+uses
+ SysUtils,Classes,Graphics,Forms,Controls,StdCtrls,Dialogs,Buttons,ExtCtrls,
+ ComCtrls,Global,Printers,LCLIntf,ActnList,Menus,PrintersDlgs,StrUtils,Types;
 
 type
  TMembersArray = array of TMembers;
@@ -116,9 +115,6 @@ type
     InsPhotoMenu: TMenuItem;
     DelPhotoMenu: TMenuItem;
     IgnPhotoMenu: TMenuItem;
-    //adpMRU1: TadpMRU;
-    OpenMenu: TPopupMenu;
-    Reopen_file: TMenuItem;
     btn_importonlinecomp: TToolButton;
     procedure AddPhotoControl(comp,cat,x: Integer);
     procedure AddPhotoOrMember(Sender: TObject);
@@ -159,6 +155,7 @@ type
     procedure EnableControls(lcontrols: Integer);
     procedure FillInPhotoControl(cat,y,x: Integer);
     procedure FormCreate(Sender: TObject);
+    procedure FormDropFiles(Sender: TObject; const FileNames: array of String);
     procedure FormShow(Sender: TObject);
     procedure FileExit1Execute(Sender: TObject);
     function FindAuthor(S: String): Integer;
@@ -204,9 +201,8 @@ type
     procedure ValidateVSlips(num_vslips: Integer);
     function VSlipsPerComp(comp: Integer): Integer;
     procedure WebLinkBtnClick(Sender: TObject);
-    procedure adpMRU1Click(Sender: TObject; const FileName: string);
   private
-//    procedure WMDROPFILES(var msg : TWMDropFiles) ; message WM_DROPFILES;
+
   public
     //Season details of currently loaded season
     season             : TSeason;
@@ -1259,8 +1255,6 @@ begin
    B.Free;
    //and finally sort the members into order
    SortMembers(True);
-   //Add to the Most Recently Used list
-   //adpMRU1.AddItem(filename);
   end
   else ShowMessage('File Load Failure');
  end
@@ -1525,8 +1519,6 @@ procedure TMainForm.FormCreate(Sender: TObject);
 var
  i: Integer;
 begin
- //Accept files being dragged into application
- //DragAcceptFiles(Handle,True);
  //Set default values by reading them from the registry
  def_num_categories   :=GetRegValI('Num_categories',c_def_num_categories);
  SetLength(def_categories,def_num_categories+1);
@@ -1550,8 +1542,16 @@ begin
  def_scoretotalm      :=GetRegValB('Score_Total_Monthly',c_def_scoretotalm);
  def_scoretotala      :=GetRegValB('Score_Total_POY',c_def_scoretotala);
  def_splitequal       :=GetRegValB('SplitEquals',c_def_splitequal);
- //Set up most recently used list
- //adpMRU1.RegistryPath :=RegKey;
+end;
+
+{-------------------------------------------------------------------------------
+Dropped files handler
+-------------------------------------------------------------------------------}
+procedure TMainForm.FormDropFiles(Sender: TObject;
+ const FileNames: array of String);
+begin
+ if extractExtension(FileNames[0])='.escc' then
+  LoadSeason(FileNames[0]);
 end;
 
 {-------------------------------------------------------------------------------
@@ -2656,14 +2656,6 @@ begin
 end;
 
 {-------------------------------------------------------------------------------
-Re-open file from Most Recently Used list
--------------------------------------------------------------------------------}
-procedure TMainForm.adpMRU1Click(Sender: TObject; const FileName: string);
-begin
- LoadSeason(FileName);
-end;
-
-{-------------------------------------------------------------------------------
 Enable/disable controls and setup main form
 -------------------------------------------------------------------------------}
 procedure TMainForm.EnableControls(lcontrols: Integer);
@@ -3292,27 +3284,8 @@ Open the ESCC website in the clients web browser
 -------------------------------------------------------------------------------}
 procedure TMainForm.WebLinkBtnClick(Sender: TObject);
 begin
- OpenURL(PChar('http://www.eastsutherlandcc.org.uk')); { *Converted from ShellExecute* }
+ OpenURL(PChar('http://www.eastsutherlandcc.org.uk'));
 end;
-
-{-------------------------------------------------------------------------------
-Accept files via drag and drop
--------------------------------------------------------------------------------}
-{procedure TMainForm.WMDROPFILES(var msg: TWMDropFiles) ;
-const
- MAXFILENAME = 255;
-var
- cnt,fileCount: integer;
- fileName: array [0..MAXFILENAME] of char;
-begin
- fileCount:=DragQueryFile(msg.Drop,$FFFFFFFF,fileName,MAXFILENAME);
- for cnt:=0 to -1+fileCount do
- begin
-  DragQueryFile(msg.Drop,cnt,fileName,MAXFILENAME);
-  if extractExtension(fileName)='.escc' then LoadSeason(fileName);
- end;
- DragFinish(msg.Drop);
-end;}
 
 {-------------------------------------------------------------------------------
 Count number of photographs per author

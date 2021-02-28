@@ -5,9 +5,7 @@ unit ImportUnit;
 interface
 
 uses
-  SysUtils,Variants,Classes,
-  Graphics,Controls,Forms,Dialogs,Global, ExtCtrls, StdCtrls,
-  Buttons, Grids;
+  Classes,Controls,Forms,Global,ExtCtrls,StdCtrls,Buttons,Grids;
 
 type
   TStringArray = array of String;
