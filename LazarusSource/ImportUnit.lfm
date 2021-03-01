@@ -33,7 +33,7 @@ object ImportForm: TImportForm
       ParentColor = False
     end
     object SpeedButton1: TSpeedButton
-      Left = 368
+      Left = 352
       Height = 22
       Top = 5
       Width = 81
@@ -58,10 +58,10 @@ object ImportForm: TImportForm
       OnClick = SpeedButton1Click
     end
     object SpeedButton2: TSpeedButton
-      Left = 455
+      Left = 447
       Height = 22
       Top = 5
-      Width = 74
+      Width = 89
       Caption = 'Discard File'
       Color = 15527148
       Flat = True
@@ -124,6 +124,7 @@ object ImportForm: TImportForm
     FixedCols = 0
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goColSizing]
     TabOrder = 1
+    OnHeaderClick = sg_ColumnsHeaderClick
     RowHeights = (
       24
       24

@@ -2115,8 +2115,8 @@ begin
       e:=0;
       while Pos(',',temp,1)<>0 do
       begin
-       temp:=Copy(temp,Pos(',',temp,1)+1,Length(temp));
        slip[vote,cat,e]:=LeftStr(temp,Pos(',',temp,1)-1);
+       temp:=Copy(temp,Pos(',',temp,1)+1,Length(temp));
        inc(e);
        if e=season.m_Places_to_score then
        begin
@@ -2135,7 +2135,7 @@ begin
        for i:=0 to season.m_Places_to_score-1 do
         if slip[vote,cat,i]<>'-1' then
         begin
-         v_slips[e+cat].Places[i]:=ConvertToId(StrToIntDef(slip[vote,cat,i],0)+1);
+         v_slips[e+cat].Places[i]:=slip[vote,cat,i];
          edit_vslip[Length(edit_vslip)-1,cat,i].Text:=v_slips[e+cat].Places[i];
         end;
       inc(progress);

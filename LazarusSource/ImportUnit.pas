@@ -9,6 +9,9 @@ uses
 
 type
   TStringArray = array of String;
+
+  { TImportForm }
+
   TImportForm = class(TForm)
     Panel1: TPanel;
     sg_Columns: TStringGrid;
@@ -17,7 +20,8 @@ type
     SpeedButton1: TSpeedButton;
     SpeedButton2: TSpeedButton;
     cb_Headers: TCheckBox;
-    procedure sg_ColumnsFixedCellClick(Sender: TObject; ACol, ARow: Integer);
+    procedure sg_ColumnsHeaderClick(Sender: TObject; IsColumn: Boolean;
+     Index: Integer);
     procedure SpeedButton1Click(Sender: TObject);
     procedure SpeedButton2Click(Sender: TObject);
     procedure cb_ColContentsChange(Sender: TObject);
@@ -27,8 +31,9 @@ type
     procedure cb_HeadersClick(Sender: TObject);
   private
     firstRow: array of String;
+    selcol  : Integer;
   public
-    counter: Integer;
+    counter : Integer;
   end;
 
 var
@@ -45,15 +50,17 @@ procedure TImportForm.cb_ColContentsChange(Sender: TObject);
 var
  i: Integer;
 begin
- //Change the header text to the newly selected
- sg_Columns.Cells[sg_Columns.Selection.Left,0]:=
-                                 cb_ColContents.Items[cb_ColContents.ItemIndex];
- //Iterate through the other columns to make sure there are no duplicates
- //changing them to "Don't Import" - which is the only duplicate allowed
- for i:=0 to sg_Columns.ColCount-1 do
-  if  (i<>sg_Columns.Selection.Left)
-  and (sg_Columns.Cells[i,0]=sg_Columns.Cells[sg_Columns.Selection.Left,0]) then
-   sg_Columns.Cells[i,0]:=cb_ColContents.Items[0];
+ if selcol>=0 then
+ begin
+  //Change the header text to the newly selected
+  sg_Columns.Cells[selcol,0]:=cb_ColContents.Items[cb_ColContents.ItemIndex];
+  //Iterate through the other columns to make sure there are no duplicates
+  //changing them to "Don't Import" - which is the only duplicate allowed
+  for i:=0 to sg_Columns.ColCount-1 do
+   if  (i<>selcol)
+   and (sg_Columns.Cells[i,0]=sg_Columns.Cells[selcol,0]) then
+    sg_Columns.Cells[i,0]:=cb_ColContents.Items[0];
+ end;
 end;
 
 {-------------------------------------------------------------------------------
@@ -64,26 +71,19 @@ begin
  cb_ColContents.Enabled:=False;
  cb_ColContents.ItemIndex:=0;
  cb_Headers.Checked:=False;
+ selcol:=-1;
 end;
 
 {-------------------------------------------------------------------------------
 User has clicked on the header row of the grid
 -------------------------------------------------------------------------------}
-procedure TImportForm.sg_ColumnsFixedCellClick(Sender: TObject; ACol,
-  ARow: Integer);
-var
- S: TGridRect;
+procedure TImportForm.sg_ColumnsHeaderClick(Sender: TObject; IsColumn: Boolean;
+ Index: Integer);
 begin
- //Set up the selection area - ie. the column, except for the header
- S.Top:=1;
- S.Bottom:=sg_Columns.RowCount-1;
- S.Left:=ACol;
- S.Right:=ACol;
- //Select it
- sg_Columns.Selection:=S;
+ //Take a note of the selected column
+ selcol:=Index;
  //Change the drop down list to match the column header
- cb_ColContents.ItemIndex:=
-                         cb_ColContents.Items.IndexOf(sg_Columns.Cells[ACol,0]);
+ cb_ColContents.ItemIndex:=cb_ColContents.Items.IndexOf(sg_Columns.Cells[Index,0]);
  //Enable the drop down list
  cb_ColContents.Enabled:=True;
 end;

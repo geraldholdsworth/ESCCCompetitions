@@ -132,8 +132,8 @@ var
 
 const
  //Date application was last updated
- AppDate                                 = '28th February 2021';
- AppVersion                              = '0.20';
+ AppDate                                 = '1st March 2021';
+ AppVersion                              = '0.21';
  //List of months
  MonthList: array[1..13] of String       = ('January',
                                             'February',

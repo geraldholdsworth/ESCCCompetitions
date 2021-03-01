@@ -207,6 +207,7 @@ begin
                                    '&season_no='+IntToStr(SelectedSeason)+
                                    '&comp_no='+IntToStr(SelectedCompetition));
     end;
+   Application.ProcessMessages;
   end;
   //Fill the array with the voting details
   num_votes:=GetInteger('request=no_votes'+

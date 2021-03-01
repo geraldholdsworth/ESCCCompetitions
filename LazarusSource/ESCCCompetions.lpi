@@ -16,9 +16,9 @@
     </General>
     <VersionInfo>
       <UseVersionInfo Value="True"/>
-      <MinorVersionNr Value="20"/>
+      <MinorVersionNr Value="21"/>
       <Language Value="0809"/>
-      <StringTable CompanyName="East Sutherland Camera Club"/>
+      <StringTable CompanyName="East Sutherland Camera Club" ProductVersion="0.21"/>
     </VersionInfo>
     <BuildModes Count="6">
       <Item1 Name="Default" Default="True"/>
