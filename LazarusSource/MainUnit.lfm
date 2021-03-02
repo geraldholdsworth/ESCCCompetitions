@@ -32115,7 +32115,6 @@ object MainForm: TMainForm
       BorderStyle = bsNone
       Font.Color = clBlack
       Font.Height = -21
-      HideSelection = False
       OnClick = comp_titleEnter
       OnEnter = comp_titleEnter
       OnExit = season_titleExit

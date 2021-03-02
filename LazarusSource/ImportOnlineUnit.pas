@@ -5,12 +5,20 @@ unit ImportOnlineUnit;
 interface
 
 uses
-  SysUtils,Controls,Forms,ComCtrls,StdCtrls,Buttons,fphttpclient;
+  SysUtils,Controls,Forms,ComCtrls,StdCtrls,Buttons,ExtCtrls,fphttpclient,
+  Dialogs;
 
 type
+
+  { TImportOnlineForm }
+
   TImportOnlineForm = class(TForm)
     CompList: TTreeView;
     Label1: TLabel;
+    ProgressLabel1: TLabel;
+    ProgressLabel2: TLabel;
+    ProgressLabel3: TLabel;
+    ProgressPanel: TPanel;
     SpeedButton1: TSpeedButton;
     SpeedButton2: TSpeedButton;
     GroupBox1: TGroupBox;
@@ -156,76 +164,99 @@ var
  num_photos,
  photo,
  num_votes,
- vote       : Integer;
+ vote,R       : Integer;
 begin
- Screen.Cursor:=crHourGlass;
- Application.ProcessMessages;
- //Reset the arrays
- SetLength(Categories,0);
- SetLength(Photographs,0);
- SetLength(Authors,0);
- SetLength(VoteSlips,0);
- //Fill the array with the category details
- //Get the number of categories
- num_cats:=GetInteger('request=no_cats'+
-                      '&season_no='+IntToStr(SelectedSeason)+
-                      '&comp_no='+IntToStr(SelectedCompetition));
- //Get the category names
- if num_cats>0 then
+ R:=MessageDlg(
+     'Are you sure you wish to do this?'+#13#10+
+     'It will delete the contents of the currently selected competition.'+#13#10+
+     'WARNING: THIS CANNOT BE UNDONE',
+     mtConfirmation,[mbYes,mbNo],0,mbNo);
+ if R=mrYes then
  begin
-  //Set up the arrays
-  SetLength(Categories,num_cats);
-  SetLength(Photographs,num_cats);
-  SetLength(Authors,num_cats);
+  Screen.Cursor:=crHourGlass;
+  ProgressPanel.Visible:=True;
+  ProgressPanel.Top:=0;
+  ProgressPanel.Left:=0;
+  ProgressLabel2.Caption:='';
+  ProgressLabel3.Caption:='';
+  Application.ProcessMessages;
+  //Reset the arrays
+  SetLength(Categories,0);
+  SetLength(Photographs,0);
+  SetLength(Authors,0);
+  SetLength(VoteSlips,0);
+  //Fill the array with the category details
+  //Get the number of categories
+  num_cats:=GetInteger('request=no_cats'+
+                       '&season_no='+IntToStr(SelectedSeason)+
+                       '&comp_no='+IntToStr(SelectedCompetition));
   //Get the category names
-  for cat:=1 to num_cats do
+  if num_cats>0 then
   begin
-   Categories[cat-1]:=GetString('request=cat_name'+
-                              '&cat_no='+IntToStr(cat)+
-                              '&season_no='+IntToStr(SelectedSeason)+
-                              '&comp_no='+IntToStr(SelectedCompetition));
-   //Fill the array with the photo details
-   num_photos:=GetInteger('request=no_photos'+
-                          '&cat_no='+IntToStr(cat)+
-                          '&season_no='+IntToStr(SelectedSeason)+
-                          '&comp_no='+IntToStr(SelectedCompetition));
-   SetLength(Photographs[cat-1],num_photos);
-   //Fill the array with the author details
-   SetLength(Authors[cat-1],num_photos);
-   if num_photos>0 then
-    for photo:=1 to num_photos do
-    begin
-     Photographs[cat-1,photo-1]:=
-                           GetString('request=photo_title'+
-                                     '&photo_no='+IntToStr(photo)+
-                                     '&cat_no='+IntToStr(cat)+
-                                     '&season_no='+IntToStr(SelectedSeason)+
-                                     '&comp_no='+IntToStr(SelectedCompetition));
-     Authors[cat-1,photo-1]:=GetString('request=author'+
-                                   '&photo_no='+IntToStr(photo)+
-                                   '&cat_no='+IntToStr(cat)+
-                                   '&season_no='+IntToStr(SelectedSeason)+
-                                   '&comp_no='+IntToStr(SelectedCompetition));
-    end;
-   Application.ProcessMessages;
-  end;
-  //Fill the array with the voting details
-  num_votes:=GetInteger('request=no_votes'+
-                        '&season_no='+IntToStr(SelectedSeason)+
-                        '&comp_no='+IntToStr(SelectedCompetition));
-  if num_votes>0 then
-  begin
-   SetLength(VoteSlips,num_votes);
-   for vote:=1 to num_votes do
-    VoteSlips[vote-1]:=GetString('request=vote'+
-                               '&vote_no='+IntToStr(vote)+
+   //Set up the arrays
+   SetLength(Categories,num_cats);
+   SetLength(Photographs,num_cats);
+   SetLength(Authors,num_cats);
+   //Get the category names
+   for cat:=1 to num_cats do
+   begin
+    ProgressLabel2.Caption:='Category '+IntToStr(cat)+' of '+IntToStr(num_cats);
+    Categories[cat-1]:=GetString('request=cat_name'+
+                               '&cat_no='+IntToStr(cat)+
                                '&season_no='+IntToStr(SelectedSeason)+
                                '&comp_no='+IntToStr(SelectedCompetition));
+    //Fill the array with the photo details
+    num_photos:=GetInteger('request=no_photos'+
+                           '&cat_no='+IntToStr(cat)+
+                           '&season_no='+IntToStr(SelectedSeason)+
+                           '&comp_no='+IntToStr(SelectedCompetition));
+    SetLength(Photographs[cat-1],num_photos);
+    //Fill the array with the author details
+    SetLength(Authors[cat-1],num_photos);
+    if num_photos>0 then
+     for photo:=1 to num_photos do
+     begin
+      ProgressLabel3.Caption:='Photograph '+IntToStr(photo)+' of '+IntToStr(num_photos);
+      Photographs[cat-1,photo-1]:=
+                            GetString('request=photo_title'+
+                                      '&photo_no='+IntToStr(photo)+
+                                      '&cat_no='+IntToStr(cat)+
+                                      '&season_no='+IntToStr(SelectedSeason)+
+                                      '&comp_no='+IntToStr(SelectedCompetition));
+      Authors[cat-1,photo-1]:=GetString('request=author'+
+                                    '&photo_no='+IntToStr(photo)+
+                                    '&cat_no='+IntToStr(cat)+
+                                    '&season_no='+IntToStr(SelectedSeason)+
+                                    '&comp_no='+IntToStr(SelectedCompetition));
+      Application.ProcessMessages;
+     end;
+   end;
+   //Fill the array with the voting details
+   num_votes:=GetInteger('request=no_votes'+
+                         '&season_no='+IntToStr(SelectedSeason)+
+                         '&comp_no='+IntToStr(SelectedCompetition));
+   if num_votes>0 then
+   begin
+    SetLength(VoteSlips,num_votes);
+    ProgressLabel3.Caption:='';
+    for vote:=1 to num_votes do
+    begin
+     ProgressLabel2.Caption:='Voting slip '+IntToStr(vote)+' of '+IntToStr(num_votes);
+     VoteSlips[vote-1]:=GetString('request=vote'+
+                                '&vote_no='+IntToStr(vote)+
+                                '&season_no='+IntToStr(SelectedSeason)+
+                                '&comp_no='+IntToStr(SelectedCompetition));
+     Application.ProcessMessages;
+    end;
+   end;
   end;
+  //Close the form
+  ProgressLabel2.Caption:='';
+  ProgressLabel3.Caption:='';
+  ProgressPanel.Visible:=False;
+  Screen.Cursor:=crDefault;
+  ModalResult:=mrOK;
  end;
- //Close the form
- Screen.Cursor:=crDefault;
- ModalResult:=mrOK;
 end;
 
 procedure TImportOnlineForm.SpeedButton2Click(Sender: TObject);

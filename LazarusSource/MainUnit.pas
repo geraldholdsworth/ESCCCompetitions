@@ -8,12 +8,7 @@ ESCC Competitions written and designed by Gerald J Holdsworth
 Graphics by Gerald J Holdsworth & Andy Kirby
 http://www.eastsutherlandcc.org.uk
 http://www.geraldholdsworth.co.uk
-
-There is a fault whereby on import (usually of photographs) that not all get
-imported and an error is reported that the file was unable to be saved. This
-normally happens when the '.escc' file is stored on Dropbox (or OneDrive) and it
-tries to upload itself during an update. Fix for this is to move the file onto
-local storage and use from there.
+https://github.com/geraldholdsworth/ESCCCompetitions
 }
 
 interface
@@ -202,7 +197,7 @@ type
     function VSlipsPerComp(comp: Integer): Integer;
     procedure WebLinkBtnClick(Sender: TObject);
   private
-
+    SeasonFile: TFileStream;
   public
     //Season details of currently loaded season
     season             : TSeason;
@@ -445,8 +440,8 @@ begin
   //if it is an ESCC
   if extractExtension(member_open.FileName)='.escc' then
   begin
-   F:=TFileStream.Create(member_open.FileName,fmOpenRead);
-   F.Seek(0,soFromBeginning);
+   F:=TFileStream.Create(member_open.FileName,fmOpenRead or fmShareDenyNone);
+   F.Position:=0;
    //Then load in the members - this will overwrite all existing ones
    LoadInMembers(F);
    //All the photographs will need to have their 'author' reset to zero
@@ -548,58 +543,65 @@ Save the season data to a file
 procedure TMainForm.SaveSeasonFile;
 var
  i,j: Integer;
- F: TFileStream;
 begin
- if season.Filename<>'' then //Only save data if a file is open
+ if(SeasonFile=nil)and(season.Filename<>'')then
  begin
-  //Open the file for writing. If it doesn't exist, create it
-  F:=TFileStream.Create(season.Filename,fmCreate);
+  //First create the file
+  SeasonFile:=TFileStream.Create(season.Filename,fmCreate);
+  //And close it
+  SeasonFile.Free;
+  //Now reopen but as Read and Write access
+  SeasonFile:=TFileStream.Create(season.Filename,fmOpenReadWrite or fmShareDenyWrite);
+ end;
+ if SeasonFile<>nil then
+ begin
+  SeasonFile.Position:=0;
   //Write the file version
-  WriteLine(F,filever);
+  WriteLine(SeasonFile,filever);
   //Write the header
-  WriteLine(F,'------------------------------------------------------------------');
-  WriteLine(F,'ESCC Competitions ©Gerald J Holdsworth/East Sutherland Camera Club');
-  WriteLine(F,'Written by Gerald J Holdsworth. Graphics by Andy Kirby');
-  WriteLine(F,'Version '+AppVersion+' ('+AppDate+')');
-  WriteLine(F,'------------------------------------------------------------------');
-  WriteLine(F,'');
+  WriteLine(SeasonFile,'------------------------------------------------------------------');
+  WriteLine(SeasonFile,'ESCC Competitions ©Gerald J Holdsworth/East Sutherland Camera Club');
+  WriteLine(SeasonFile,'Written by Gerald J Holdsworth. Graphics by Andy Kirby');
+  WriteLine(SeasonFile,'Version '+AppVersion+' ('+AppDate+')');
+  WriteLine(SeasonFile,'------------------------------------------------------------------');
+  WriteLine(SeasonFile,'');
   //---------------------------------------------------------------------------
-  WriteLine(F,'========Season Details========');
-  WriteLine(F,season.Title);
-  WriteLine(F,IntToStr(season.Num_categories));
-  WriteLine(F,IntToStr(season.a_Places_to_score));
-  WriteLine(F,IntToStr(season.m_Places_to_score));
-  WriteLine(F,IntToStr(season.Num_competitions));
-  WriteLine(F,IntToStr(season.Start_Month));
-  WriteLine(F,IntToStr(season.IncEntries));
-  WriteLine(F,IntToStr(season.ScoreEntries));
-  WriteLine(F,IntToStr(season.MaxEntries));
-  WriteLine(F,BoolToStr(season.SplitEqual));
-  WriteLine(F,BoolToStr(season.ScoreTotalm));
-  WriteLine(F,BoolToStr(season.ScoreTotala));
+  WriteLine(SeasonFile,'========Season Details========');
+  WriteLine(SeasonFile,season.Title);
+  WriteLine(SeasonFile,IntToStr(season.Num_categories));
+  WriteLine(SeasonFile,IntToStr(season.a_Places_to_score));
+  WriteLine(SeasonFile,IntToStr(season.m_Places_to_score));
+  WriteLine(SeasonFile,IntToStr(season.Num_competitions));
+  WriteLine(SeasonFile,IntToStr(season.Start_Month));
+  WriteLine(SeasonFile,IntToStr(season.IncEntries));
+  WriteLine(SeasonFile,IntToStr(season.ScoreEntries));
+  WriteLine(SeasonFile,IntToStr(season.MaxEntries));
+  WriteLine(SeasonFile,BoolToStr(season.SplitEqual));
+  WriteLine(SeasonFile,BoolToStr(season.ScoreTotalm));
+  WriteLine(SeasonFile,BoolToStr(season.ScoreTotala));
   //---------------------------------------------------------------------------
-  WriteLine(F,'========Category Details========');
+  WriteLine(SeasonFile,'========Category Details========');
   for i:=0 to season.Num_categories-1 do
-   WriteLine(F,categories[i]);
+   WriteLine(SeasonFile,categories[i]);
   //---------------------------------------------------------------------------
-  WriteLine(F,'========Competition Details========');
+  WriteLine(SeasonFile,'========Competition Details========');
   for i:=0 to season.Num_competitions-1 do
   begin
-   WriteLine(F,IntToStr(competitions[i].Month));
-   WriteLine(F,competitions[i].Title);
-   WriteLine(F,BoolToStr(competitions[i].Ext_judge));
-   WriteLine(F,BoolToStr(competitions[i].Deleted));
+   WriteLine(SeasonFile,IntToStr(competitions[i].Month));
+   WriteLine(SeasonFile,competitions[i].Title);
+   WriteLine(SeasonFile,BoolToStr(competitions[i].Ext_judge));
+   WriteLine(SeasonFile,BoolToStr(competitions[i].Deleted));
   end;
   //---------------------------------------------------------------------------
-   WriteLine(F,'========Scoring - annual========');
+   WriteLine(SeasonFile,'========Scoring - annual========');
   for i:=0 to season.a_Places_to_score-1 do
-   WriteLine(F,IntToStr(a_scoring[i]));
+   WriteLine(SeasonFile,IntToStr(a_scoring[i]));
   //---------------------------------------------------------------------------
-  WriteLine(F,'========Scoring - monthly========');
+  WriteLine(SeasonFile,'========Scoring - monthly========');
   for i:=0 to season.m_Places_to_score-1 do
-   WriteLine(F,IntToStr(m_scoring[i]));
+   WriteLine(SeasonFile,IntToStr(m_scoring[i]));
   //---------------------------------------------------------------------------
-  WriteLine(F,'========Voting Slips========');
+  WriteLine(SeasonFile,'========Voting Slips========');
   //Work out total number of voting slips, skipping those that have been deleted
   j:=0;
   for i:=0 to Length(v_slips)-1 do
@@ -609,7 +611,7 @@ begin
     and (v_slips[i].Category>=0) then
      inc(j);
   //Total number of voting slips
-  WriteLine(F,IntToStr(j));
+  WriteLine(SeasonFile,IntToStr(j));
   //Now write the slips to the file, again skipping those that have been deleted
   for i:=0 to Length(v_slips)-1 do
    if v_slips[i].Used then
@@ -617,44 +619,46 @@ begin
     if  (v_slips[i].Competition>=0)
     and (v_slips[i].Category>=0) then
     begin
-     WriteLine(F,IntToStr(v_slips[i].Competition));
-     WriteLine(F,IntToStr(v_slips[i].Category));
+     WriteLine(SeasonFile,IntToStr(v_slips[i].Competition));
+     WriteLine(SeasonFile,IntToStr(v_slips[i].Category));
      for j:=0 to season.m_places_to_score-1 do
-      WriteLine(F,v_slips[i].Places[j]);
+      WriteLine(SeasonFile,v_slips[i].Places[j]);
     end;
   //---------------------------------------------------------------------------
-  WriteLine(F,'========Photographs========');
+  WriteLine(SeasonFile,'========Photographs========');
   //Work out total number of photographs: -1 in competition and category denotes
   //a deleted photograph, and should be skipped
   j:=0;
   for i:=0 to Length(photographs)-1 do
    if (photographs[i].Competition>=0) and (photographs[i].Category>=0) then inc(j);
-  WriteLine(F,IntToStr(j)); {Total number of photographs}
+  WriteLine(SeasonFile,IntToStr(j)); {Total number of photographs}
   for i:=0 to Length(photographs)-1 do
    if (photographs[i].Competition>=0) and (photographs[i].Category>=0) then
    begin
-    WriteLine(F,IntToStr(photographs[i].Competition));
-    WriteLine(F,IntToStr(photographs[i].Category));
-    WriteLine(F,IntToStr(photographs[i].Author-1));
-    WriteLine(F,photographs[i].Title);
-    WriteLine(F,photographs[i].ID);
-    WriteLine(F,photographs[i].Voting);
-    WriteLine(F,IntToStr(photographs[i].Score));
-    WriteLine(F,photographs[i].Position);
-    WriteLine(F,BoolToStr(photographs[i].Ignore));
+    WriteLine(SeasonFile,IntToStr(photographs[i].Competition));
+    WriteLine(SeasonFile,IntToStr(photographs[i].Category));
+    WriteLine(SeasonFile,IntToStr(photographs[i].Author-1));
+    WriteLine(SeasonFile,photographs[i].Title);
+    WriteLine(SeasonFile,photographs[i].ID);
+    WriteLine(SeasonFile,photographs[i].Voting);
+    WriteLine(SeasonFile,IntToStr(photographs[i].Score));
+    WriteLine(SeasonFile,photographs[i].Position);
+    WriteLine(SeasonFile,BoolToStr(photographs[i].Ignore));
    end;
   //---------------------------------------------------------------------------
-  WriteLine(F,'========Members========');
-  WriteLine(F,IntToStr(Length(members)-1)); //Total number of members
+  WriteLine(SeasonFile,'========Members========');
+  WriteLine(SeasonFile,IntToStr(Length(members)-1)); //Total number of members
   for i:=1 to Length(members)-1 do
   begin
-   WriteLine(F,members[i].Forename);
-   WriteLine(F,members[i].Surname);
+   WriteLine(SeasonFile,members[i].Forename);
+   WriteLine(SeasonFile,members[i].Surname);
    for j:=0 to season.Num_categories-1 do
-    WriteLine(F,IntToStr(members[i].Score[j]));
+    WriteLine(SeasonFile,IntToStr(members[i].Score[j]));
   end;
   //---------------------------------------------------------------------------
-  F.Free;
+  //Set the length (as it may be shorter than before
+  SeasonFile.Size:=SeasonFile.Position;
+//  F.Free;
  end;
 end;
 
@@ -957,6 +961,9 @@ var
 begin
  //Save the season
  SaveSeasonFile;
+ //Close out the file
+ SeasonFile.Free;
+ SeasonFile:=nil;
  //Close any open competition
  if comp_title.Tag>=0 then CloseCompetition;
  //Reset the season paramters
@@ -1063,19 +1070,19 @@ Load an existing season
 procedure TMainForm.LoadSeason(filename: String);
 var
  i,j        : Integer;
- F,B        : TFileStream;
  S          : String;
  FileVersion: Real;
  LoadSuccess: Boolean;
- buffer     : array of ANSIChar;
 begin
+ //Close the current season
+ if SeasonFile<>nil then CloseSeason;
  //Flag to whether the load was successful
  LoadSuccess:=True;
  //Open the file
- F:=TFileStream.Create(filename,fmOpenRead);
- F.Seek(0,soFromBeginning);
+ SeasonFile:=TFileStream.Create(filename,fmOpenReadWrite or fmShareDenyWrite);
+ SeasonFile.Position:=0;
  //Read version information
- ReadLine(F,S);
+ ReadLine(SeasonFile,S);
  //Remove any spurious characters at the front
  if (Ord(S[1])<48) or (Ord(S[1])>57) then
   repeat
@@ -1085,21 +1092,19 @@ begin
  FileVersion:=StrToFloatDef(S,0.00);
  if FileVersion>=0.02 then //minimum version allowed
  begin
-  //Close the current season
-  CloseSeason;
   //Start setting up the array
   season.Filename:=filename;
   //---------------------------------------------------------------------------
-  if SeekLn(F,'========Season Details========') then
+  if SeekLn(SeasonFile,'========Season Details========') then
   begin //Load Season Details (versions >=0.02)
-   ReadLine(F,season.Title); //Season Title
-   ReadLine(F,S);            //Number of Categories
+   ReadLine(SeasonFile,season.Title); //Season Title
+   ReadLine(SeasonFile,S);            //Number of Categories
    season.Num_categories   :=StrToIntDef(S,def_num_categories);
-   ReadLine(F,S);            //POY Number of Places to Score
+   ReadLine(SeasonFile,S);            //POY Number of Places to Score
    season.a_Places_to_score:=StrToIntDef(S,def_a_places_to_score);
-   ReadLine(F,S);            //Monthly Number of Places to Score
+   ReadLine(SeasonFile,S);            //Monthly Number of Places to Score
    season.m_Places_to_score:=StrToIntDef(S,def_m_places_to_score);
-   ReadLine(F,S);            //Number of competitions in the season
+   ReadLine(SeasonFile,S);            //Number of competitions in the season
    season.Num_competitions :=StrToIntDef(S,def_num_categories);
    if FileVersion=0.02 then
    begin //Default values if version 0.02
@@ -1116,122 +1121,122 @@ begin
    end;
    if FileVersion>0.02 then
    begin //Values for versions >0.02
-    ReadLine(F,S);           //Start Month
+    ReadLine(SeasonFile,S);           //Start Month
     season.Start_Month     :=StrToIntDef(S,def_start_month);
-    ReadLine(F,S);           //Entries to include in POY
+    ReadLine(SeasonFile,S);           //Entries to include in POY
     season.IncEntries      :=StrToIntDef(S,def_inc_entries);
     if FileVersion>0.04 then
     begin //Values for versions >0.04
-     ReadLine(F,S);          //Number of entries, per member, to include in POY
+     ReadLine(SeasonFile,S);          //Number of entries, per member, to include in POY
      season.ScoreEntries   :=StrToIntDef(S,def_score_entries);
-     ReadLine(F,S);          //Max number of entries, per member, per category
+     ReadLine(SeasonFile,S);          //Max number of entries, per member, per category
      season.MaxEntries     :=StrToIntDef(S,def_maxentries);
-     ReadLine(F,S);          //Split the equal places or not
+     ReadLine(SeasonFile,S);          //Split the equal places or not
      season.SplitEqual     :=S='TRUE';
     end;
-    ReadLine(F,S);           //Total or Average scores (monthly)
+    ReadLine(SeasonFile,S);           //Total or Average scores (monthly)
     season.ScoreTotalm     :=S='TRUE';
-    ReadLine(F,S);           //Total or Average scores (POY)
+    ReadLine(SeasonFile,S);           //Total or Average scores (POY)
     season.ScoreTotala     :=S='TRUE';
    end;
   end
   else LoadSuccess         :=False;
   //---------------------------------------------------------------------------
-  if SeekLn(F,'========Category Details========') then
+  if SeekLn(SeasonFile,'========Category Details========') then
   begin //Category Details (all versions)
    SetLength(categories,season.Num_categories);
    for i:=0 to season.Num_categories-1 do
-    ReadLine(F,categories[i]);//Category titles
+    ReadLine(SeasonFile,categories[i]);//Category titles
   end
   else LoadSuccess:=False;
   //---------------------------------------------------------------------------
-  if SeekLn(F,'========Competition Details========') then
+  if SeekLn(SeasonFile,'========Competition Details========') then
   begin //Competition details (all versions)
    SetLength(competitions,season.Num_competitions);
    for i:=0 to season.Num_competitions-1 do
    begin
-    ReadLine(F,S);           //Month of competition
+    ReadLine(SeasonFile,S);           //Month of competition
     competitions[i].Month:=StrToIntDef(S,0);
-    ReadLine(F,competitions[i].Title);//Competition title
-    ReadLine(F,S);           //Externally judged?
+    ReadLine(SeasonFile,competitions[i].Title);//Competition title
+    ReadLine(SeasonFile,S);           //Externally judged?
     competitions[i].Ext_judge:=S='TRUE';
-    ReadLine(F,S);           //Deleted entry?
+    ReadLine(SeasonFile,S);           //Deleted entry?
     competitions[i].Deleted:=S='TRUE';
    end;
   end
   else LoadSuccess:=False;
   //---------------------------------------------------------------------------
-  if SeekLn(F,'========Scoring - annual========') then
+  if SeekLn(SeasonFile,'========Scoring - annual========') then
   begin //POY Scoring (all versions)
    SetLength(a_scoring,season.a_Places_to_score);
    for i:=0 to season.a_Places_to_score-1 do
    begin
-    ReadLine(F,S);           //Scores towards POY
+    ReadLine(SeasonFile,S);           //Scores towards POY
     a_scoring[i]:=StrToIntDef(S,0);
    end;
   end
   else LoadSuccess:=False;
   //---------------------------------------------------------------------------
-  if SeekLn(F,'========Scoring - monthly========') then
+  if SeekLn(SeasonFile,'========Scoring - monthly========') then
   begin //Monthly scoring (all versions)
    SetLength(m_scoring,season.m_Places_to_score);
    for i:=0 to season.m_Places_to_score-1 do
    begin
-    ReadLine(F,S);           //Scores to use
+    ReadLine(SeasonFile,S);           //Scores to use
     m_scoring[i]:=StrToIntDef(S,0);
    end;
   end
   else LoadSuccess:=False;
   //---------------------------------------------------------------------------
-  if SeekLn(F,'========Voting Slips========') then
+  if SeekLn(SeasonFile,'========Voting Slips========') then
   begin //Voting slips (all versions)
-   ReadLine(F,S); //Total number of voting slips
+   ReadLine(SeasonFile,S); //Total number of voting slips
    SetLength(v_slips,StrToIntDef(S,0));
    for i:=0 to Length(v_slips)-1 do
    begin
-    ReadLine(F,S);           //Competition number
+    ReadLine(SeasonFile,S);           //Competition number
     v_slips[i].Competition:=StrToIntDef(S,0);
-    ReadLine(F,S);           //Category number
+    ReadLine(SeasonFile,S);           //Category number
     v_slips[i].Category:=StrToIntDef(S,0);
     v_slips[i].Used:=True;   //Deleted?
     SetLength(v_slips[i].Places,season.m_Places_to_score);
     for j:=0 to season.m_places_to_score-1 do
-     ReadLine(F,v_slips[i].Places[j]);//Places ranked
+     ReadLine(SeasonFile,v_slips[i].Places[j]);//Places ranked
    end;
   end
   else LoadSuccess:=False;
   //---------------------------------------------------------------------------
-  if SeekLn(F,'========Photographs========') then
+  if SeekLn(SeasonFile,'========Photographs========') then
   begin //Photograph details (all versions)
-   ReadLine(F,S);
+   ReadLine(SeasonFile,S);
    SetLength(photographs,StrToIntDef(S,0)); //Total number of photographs
    for i:=0 to Length(photographs)-1 do
    begin
-    ReadLine(F,S);           //Competition number
+    ReadLine(SeasonFile,S);           //Competition number
     photographs[i].Competition:=StrToIntDef(S,0);
-    ReadLine(F,S);           //Category number
+    ReadLine(SeasonFile,S);           //Category number
     photographs[i].Category:=StrToIntDef(S,0);
-    ReadLine(F,S);           //Author number
+    ReadLine(SeasonFile,S);           //Author number
     photographs[i].Author:=StrToIntDef(S,-1)+1;
-    ReadLine(F,photographs[i].Title); //Title
-    ReadLine(F,photographs[i].ID);    //ID given
-    ReadLine(F,photographs[i].Voting);//How was it voted
-    ReadLine(F,S);           //Calculated score
+    ReadLine(SeasonFile,photographs[i].Title); //Title
+    ReadLine(SeasonFile,photographs[i].ID);    //ID given
+    ReadLine(SeasonFile,photographs[i].Voting);//How was it voted
+    ReadLine(SeasonFile,S);           //Calculated score
     photographs[i].Score:=StrToIntDef(S,0);
-    ReadLine(F,S);           //Calculated position
+    ReadLine(SeasonFile,S);           //Calculated position
     photographs[i].Position:=S;
     if FileVersion<0.04 then
      photographs[i].Ignore:=False //Deleted flag, default for version <0.04
     else
     begin
-     ReadLine(F,S);          //Deleted flag for versions >=0.04
+     ReadLine(SeasonFile,S);          //Deleted flag for versions >=0.04
      photographs[i].Ignore:=S='TRUE';
     end;
    end;
   end
   else LoadSuccess:=False;
   //---------------------------------------------------------------------------
-  if LoadSuccess then LoadSuccess:=LoadInMembers(F);
+  if LoadSuccess then LoadSuccess:=LoadInMembers(SeasonFile);
   //---------------------------------------------------------------------------
   if LoadSuccess then
   begin
@@ -1245,22 +1250,12 @@ begin
    //Populate the month combo box in the main part of the form
    PopulateComboBox(comp_date,MonthList);
    //comp_date.Items.Delete(12);
-   //Create a backup file
-   F.Position:=0;
-   j:=F.Size;
-   SetLength(buffer,j);
-   F.Read(buffer[0],j);
-   B:=TFileStream.Create(season.Filename+'.back',fmCreate);
-   B.Write(buffer[0],j);
-   B.Free;
    //and finally sort the members into order
    SortMembers(True);
   end
   else ShowMessage('File Load Failure');
  end
  else ShowMessage('File format is too old');
- //Finished with the FileStream;
- F.Free;
 end;
 
 {-------------------------------------------------------------------------------
@@ -1542,6 +1537,7 @@ begin
  def_scoretotalm      :=GetRegValB('Score_Total_Monthly',c_def_scoretotalm);
  def_scoretotala      :=GetRegValB('Score_Total_POY',c_def_scoretotala);
  def_splitequal       :=GetRegValB('SplitEquals',c_def_splitequal);
+ SeasonFile:=nil;
 end;
 
 {-------------------------------------------------------------------------------
@@ -1564,6 +1560,7 @@ begin
  sb_complist.Height:=13*ControlHeight;
  CloseSeason;
  EnableControls(ec_AllOff);
+ SeasonPanel.SetFocus;
 end;
 
 {-------------------------------------------------------------------------------
@@ -2008,7 +2005,6 @@ Import voting slip from website
 -------------------------------------------------------------------------------}
 procedure TMainForm.ImportOnlineComp(Sender: TObject);
 var
- R,
  num_cats,
  cat,
  photo,
@@ -2021,138 +2017,137 @@ var
 begin
  if ImportOnlineForm.ShowModal=mrOK then
  begin
-  R:=MessageDlg(
-      'Are you sure you wish to do this?'+#13#10+
-      'It will delete the contents of the currently selected competition.'+#13#10+
-      'WARNING: THIS CANNOT BE UNDONE',
-      mtConfirmation,[mbYes,mbNo],0,mbNo);
-  if R=mrYes then
+  num_cats:=Length(ImportOnlineForm.Categories);
+  progress:=0;
+  //Only continue if the number of categories match
+  if num_cats=Length(categories) then
   begin
-   num_cats:=Length(ImportOnlineForm.Categories);
-   progress:=0;
-   //Only continue if the number of categories match
-   if num_cats=Length(categories) then
+   //Check the category names and only continue if match
+   match:=True;
+   for cat:=0 to num_cats-1 do
    begin
-    //Check the category names and only continue if match
-    match:=True;
+    if categories[cat]<>ImportOnlineForm.Categories[cat] then match:=False;
+    inc(progress,Length(ImportOnlineForm.Photographs[cat]));
+    if cat<Length(panl_ID) then inc(progress,Length(panl_ID[cat]));
+   end;
+   if match then
+   begin
+    inc(progress,Length(panl_vslip));
+    //Setup the progress bar
+    ProgressBar1.Max:=progress;
+    ProgressBar1.Position:=0;
+    ProgressBar1.Update;
+    Application.ProcessMessages;
+    progress:=0;
+    //Delete all entries in each category
     for cat:=0 to num_cats-1 do
-    begin
-     if categories[cat]<>ImportOnlineForm.Categories[cat] then match:=False;
-     inc(progress,Length(ImportOnlineForm.Photographs[cat]));
-     if cat<Length(panl_ID) then inc(progress,Length(panl_ID[cat]));
-    end;
-    if match then
-    begin
-     inc(progress,Length(panl_vslip));
-     //Setup the progress bar
-     ProgressBar1.Max:=progress;
-     ProgressBar1.Position:=0;
-     ProgressBar1.Update;
-     progress:=0;
-     //Delete all entries in each category
-     for cat:=0 to num_cats-1 do
-      for photo:=Length(panl_ID[cat])-1 downto 0 do
-      begin
-       DeletePhotograph(cat,photo);
-       inc(progress);
-       ProgressBar1.Position:=progress;
-       ProgressBar1.Update;
-      end;
-     //Delete all voting slips
-     for vote:=Length(panl_vslip)-1 downto 0 do
+     for photo:=Length(panl_ID[cat])-1 downto 0 do
      begin
-      //Delete the slips
-      for cat:=0 to num_cats-1 do
-      begin
-       v_slips[panl_vslip[vote].Tag+cat].Used:=False;
-       v_slips[panl_vslip[vote].Tag+cat].Competition:=-1;
-       v_slips[panl_vslip[vote].Tag+cat].Category:=-1;
-      end;
-      //Delete the controls
-      panl_vslip[vote].Free;
-      delvotslip_btn[vote].Free;
-      for i:=0 to Length(edit_vslip[vote])-1 do
-       for e:=0 to Length(edit_vslip[vote,i])-1 do
-       begin
-        edit_vslip[vote,i,e].Free;
-        inc(progress);
-        ProgressBar1.Position:=progress;
-        ProgressBar1.Update;
-       end;
-     end;
-     SetLength(panl_vslip,    0);
-     SetLength(delvotslip_btn,0);
-     SetLength(edit_vslip,    0);
-     //Import all entries in each category
-     for cat:=0 to num_cats-1 do
-      for photo:=0 to Length(ImportOnLineForm.Photographs[cat])-1 do
-      begin
-       AddNewPhotograph(cat);
-       i:=Length(photographs)-1;
-       photographs[i].Title:=ImportOnlineForm.Photographs[cat,photo];
-       photographs[i].Score:=0;
-       photographs[i].Position:='0';
-       photographs[i].Voting:='';
-       photographs[i].Author:=FindAuthor(ImportOnlineForm.Authors[cat,photo]);
-       e:=Length(panl_ID[cat])-1;
-       edit_title[cat,e].Text      :=photographs[i].Title;
-       edit_score[cat,e].Text      :=IntToStr(photographs[i].Score);
-       cbox_author[cat,e].ItemIndex:=photographs[i].Author;
-       edit_voting[cat,e].Text     :=photographs[i].Voting;
-       edit_place[cat,e].Text      :=photographs[i].Position;
-       MarkEmptyPhotos(cat,e+1);
-       inc(progress);
-       ProgressBar1.Position:=progress;
-       ProgressBar1.Update;
-      end;
-     //Import all voting slips
-     SetLength(slip,Length(ImportOnlineForm.VoteSlips),num_cats,season.m_Places_to_score);
-     //Decode the CSV format into a temporary array
-     for vote:=0 to Length(ImportOnlineForm.VoteSlips)-1 do
-     begin
-      temp:=ImportOnlineForm.VoteSlips[vote];
-      cat:=0;
-      e:=0;
-      while Pos(',',temp,1)<>0 do
-      begin
-       slip[vote,cat,e]:=LeftStr(temp,Pos(',',temp,1)-1);
-       temp:=Copy(temp,Pos(',',temp,1)+1,Length(temp));
-       inc(e);
-       if e=season.m_Places_to_score then
-       begin
-        e:=0;
-        inc(cat);
-        if cat>=num_cats then cat:=num_cats-1;
-       end;
-      end;
-      slip[vote,num_cats-1,season.m_Places_to_score-1]:=temp;
-      //Add a new voting slip, including the controls
-      AddNewVotingSlip(False);
-      //Get the reference for the new voting slip
-      e:=panl_vslip[Length(panl_vslip)-1].Tag;
-      //Now populate the places
-      for cat:=0 to num_cats-1 do
-       for i:=0 to season.m_Places_to_score-1 do
-        if slip[vote,cat,i]<>'-1' then
-        begin
-         v_slips[e+cat].Places[i]:=slip[vote,cat,i];
-         edit_vslip[Length(edit_vslip)-1,cat,i].Text:=v_slips[e+cat].Places[i];
-        end;
+      DeletePhotograph(cat,photo);
       inc(progress);
       ProgressBar1.Position:=progress;
       ProgressBar1.Update;
+      Application.ProcessMessages;
      end;
-     RecalculateResults(comp_title.Tag);
-     SaveSeasonFile;
-     ProgressBar1.Position:=0;
+    //Delete all voting slips
+    for vote:=Length(panl_vslip)-1 downto 0 do
+    begin
+     //Delete the slips
+     for cat:=0 to num_cats-1 do
+     begin
+      v_slips[panl_vslip[vote].Tag+cat].Used:=False;
+      v_slips[panl_vslip[vote].Tag+cat].Competition:=-1;
+      v_slips[panl_vslip[vote].Tag+cat].Category:=-1;
+     end;
+     //Delete the controls
+     panl_vslip[vote].Free;
+     delvotslip_btn[vote].Free;
+     for i:=0 to Length(edit_vslip[vote])-1 do
+      for e:=0 to Length(edit_vslip[vote,i])-1 do
+      begin
+       edit_vslip[vote,i,e].Free;
+       inc(progress);
+       ProgressBar1.Position:=progress;
+       ProgressBar1.Update;
+       Application.ProcessMessages;
+      end;
+    end;
+    SetLength(panl_vslip,    0);
+    SetLength(delvotslip_btn,0);
+    SetLength(edit_vslip,    0);
+    //Import all entries in each category
+    for cat:=0 to num_cats-1 do
+     for photo:=0 to Length(ImportOnLineForm.Photographs[cat])-1 do
+     begin
+      AddNewPhotograph(cat);
+      i:=Length(photographs)-1;
+      photographs[i].Title:=ImportOnlineForm.Photographs[cat,photo];
+      photographs[i].Score:=0;
+      photographs[i].Position:='0';
+      photographs[i].Voting:='';
+      photographs[i].Author:=FindAuthor(ImportOnlineForm.Authors[cat,photo]);
+      e:=Length(panl_ID[cat])-1;
+      edit_title[cat,e].Text      :=photographs[i].Title;
+      edit_score[cat,e].Text      :=IntToStr(photographs[i].Score);
+      cbox_author[cat,e].ItemIndex:=photographs[i].Author;
+      edit_voting[cat,e].Text     :=photographs[i].Voting;
+      edit_place[cat,e].Text      :=photographs[i].Position;
+      MarkEmptyPhotos(cat,e+1);
+      inc(progress);
+      ProgressBar1.Position:=progress;
+      ProgressBar1.Update;
+      Application.ProcessMessages;
+     end;
+    //Import all voting slips
+    SetLength(slip,Length(ImportOnlineForm.VoteSlips),num_cats,season.m_Places_to_score);
+    //Decode the CSV format into a temporary array
+    for vote:=0 to Length(ImportOnlineForm.VoteSlips)-1 do
+    begin
+     temp:=ImportOnlineForm.VoteSlips[vote];
+     cat:=0;
+     e:=0;
+     while Pos(',',temp,1)<>0 do
+     begin
+      slip[vote,cat,e]:=LeftStr(temp,Pos(',',temp,1)-1);
+      temp:=Copy(temp,Pos(',',temp,1)+1,Length(temp));
+      inc(e);
+      if e=season.m_Places_to_score then
+      begin
+       e:=0;
+       inc(cat);
+       if cat>=num_cats then cat:=num_cats-1;
+      end;
+     end;
+     slip[vote,num_cats-1,season.m_Places_to_score-1]:=temp;
+     //Add a new voting slip, including the controls
+     AddNewVotingSlip(False);
+     //Get the reference for the new voting slip
+     e:=panl_vslip[Length(panl_vslip)-1].Tag;
+     //Now populate the places
+     for cat:=0 to num_cats-1 do
+      for i:=0 to season.m_Places_to_score-1 do
+       if slip[vote,cat,i]<>'-1' then
+       begin
+        v_slips[e+cat].Places[i]:=slip[vote,cat,i];
+        edit_vslip[Length(edit_vslip)-1,cat,i].Text:=v_slips[e+cat].Places[i];
+       end;
+     inc(progress);
+     ProgressBar1.Position:=progress;
      ProgressBar1.Update;
-    end
-    else
-     MessageDlg('Category names differ. Cannot continue.',mtError,[mbOK],0);
+     Application.ProcessMessages;
+    end;
+    RecalculateResults(comp_title.Tag);
+    SaveSeasonFile;
+    ProgressBar1.Position:=0;
+    ProgressBar1.Update;
+    Application.ProcessMessages;
+    ShowMessage('Finished importing');
    end
    else
-    MessageDlg('Number of categories differ. Cannot continue.',mtError,[mbOK],0);
-  end;
+    MessageDlg('Category names differ. Cannot continue.',mtError,[mbOK],0);
+  end
+  else
+   MessageDlg('Number of categories differ. Cannot continue.',mtError,[mbOK],0);
  end;
 end;
 
@@ -2692,7 +2687,7 @@ begin
   add_btn_src.Enabled:=True;
   btn_a_results.Enabled:=True;
   btn_save_a_results.Enabled:=True;
-  btn_prt_a_results.Enabled:=True;
+  btn_prt_a_results.Enabled:=Printer.Printers.Count>0;
   LoadMembers.Enabled:=True;
   sb_editseason.Enabled:=True;
   sb_CloseSeason.Enabled:=True;
@@ -2701,7 +2696,7 @@ begin
  begin
   btn_results.Enabled:=True;     //Display results on screen
   btn_saveresults.Enabled:=True; //Save results to a file
-  print_btn.Enabled:=True;       //Prints results to a printer
+  print_btn.Enabled:=Printer.Printers.Count>0;//Prints results to a printer
   btn_recalculate.Enabled:=True; //Recalculates positions
   btn_importphotos.Enabled:=True;//Import Photos via CSV
   btn_importonlinecomp.Enabled:=True;//Import entire competition
@@ -3684,7 +3679,7 @@ begin
  Printer.Canvas.LineTo(Printer.PageWidth-right_margin,Printer.PageHeight-bottom_margin-342);
  PrintLine('ESCC Competitions version '+AppVersion+' written by Gerald J Holdsworth',
            'Arial',8,-1,[fsBold,fsItalic]);
- PrintLine('©2017 Gerald J Holdsworth and East Sutherland Camera Club',
+ PrintLine('©2021 Gerald J Holdsworth and East Sutherland Camera Club',
            'Arial',8,-1,[fsBold,fsItalic]);
  PrintLine('http://www.eastsutherlandcc.org.uk',
            'Arial',8,-1,[fsBold,fsItalic]);

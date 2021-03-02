@@ -132,8 +132,8 @@ var
 
 const
  //Date application was last updated
- AppDate                                 = '1st March 2021';
- AppVersion                              = '0.21';
+ AppDate                                 = '2nd March 2021';
+ AppVersion                              = '0.22';
  //List of months
  MonthList: array[1..13] of String       = ('January',
                                             'February',
@@ -459,7 +459,7 @@ var
  S: String;
 begin
  //Moves the pointer to the beginning of the file
- F.Seek(0,soFromBeginning);
+ F.Position:=0;//Seek(0,soFromBeginning);
  Result:=False;
  repeat
   ReadLine(F,S);
