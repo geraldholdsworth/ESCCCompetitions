@@ -2108,17 +2108,17 @@ begin
      e:=0;
      while Pos(',',temp,1)<>0 do
      begin
-      slip[vote,cat,e]:=LeftStr(temp,Pos(',',temp,1)-1);
+      if cat<num_cats then slip[vote,cat,e]:=LeftStr(temp,Pos(',',temp,1)-1);
       temp:=Copy(temp,Pos(',',temp,1)+1,Length(temp));
       inc(e);
       if e=season.m_Places_to_score then
       begin
        e:=0;
        inc(cat);
-       if cat>=num_cats then cat:=num_cats-1;
+       //if cat>=num_cats then cat:=num_cats-1;
       end;
      end;
-     slip[vote,num_cats-1,season.m_Places_to_score-1]:=temp;
+     if temp<>'' then slip[vote,num_cats-1,season.m_Places_to_score-1]:=temp;
      //Add a new voting slip, including the controls
      AddNewVotingSlip(False);
      //Get the reference for the new voting slip

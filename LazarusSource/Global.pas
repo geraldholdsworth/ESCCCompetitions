@@ -132,8 +132,8 @@ var
 
 const
  //Date application was last updated
- AppDate                                 = '2nd March 2021';
- AppVersion                              = '0.22';
+ AppDate                                 = '14th April 2022';
+ AppVersion                              = '0.23';
  //List of months
  MonthList: array[1..13] of String       = ('January',
                                             'February',
@@ -726,6 +726,7 @@ var
 begin
  Result:=False;
  ch:=#0;
+ RawLine:='';
  while (Stream.Read(ch,1)=1) and (ch<>#13) and (ch<>#10) do
  begin
   Result:=True;
@@ -751,11 +752,11 @@ Custom Message Dialogue
 -------------------------------------------------------------------------------}
 function CustomMessageDlg(const Msg: string;DlgTypt: TmsgDlgType;button: TMsgDlgButtons;
   Caption: array of string;dlgcaption: string;default: TMsgDlgBtn): Integer;
-var
+{var
  aMsgdlg     : TForm;
  i,x         : Integer;
  Dlgbutton   : Tbutton;
- Captionindex: Integer;
+ Captionindex: Integer;}
 begin
 { aMsgdlg:=createMessageDialog(Msg,DlgTypt,button,default);
  aMsgdlg.Caption:=dlgcaption;
@@ -777,6 +778,7 @@ begin
   end;
  end;
  Result:=aMsgdlg.Showmodal;}
+ Result:=mrOK;
 end;
 
 {-------------------------------------------------------------------------------
